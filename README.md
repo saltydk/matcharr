@@ -1,6 +1,10 @@
 Current assumptions / limitations:
+
 Agents for movies are tmdb (Plex Movie can also use tmdb) and not imdb.
+
 Agents for shows are tvdb which means no HAMA or tmdb.
+
+Identical root paths in sonarr,radarr and Plex.
 
 Use something like [Plex Autoscan](https://github.com/l3uddz/plex_autoscan) to identify the IDs of your libraries. Below is a snippet from the Plex Autoscan readme:
 ### Plex Section IDs
