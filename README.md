@@ -60,5 +60,5 @@ Then you will have to enter your sonarr and radarr instances into the config (re
 }
 ```
 
-You can add as many sonarr or radarr instances as you would like but there is no formatting check built into my script so make sure it is valid json. 
+You can add as many sonarr or radarr instances (but with unique names) as you would like but there is no formatting check built into my script so make sure it is valid json. 
 You can grab your Plex token from Plex Autoscan or look [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
