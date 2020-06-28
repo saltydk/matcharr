@@ -34,7 +34,7 @@ Then you will have to enter your sonarr and radarr instances into the config (re
   "plex_token": "",
   "plex_url": "https://plex.domain.tld",
   "radarr": {
-    "radarr2": {
+    "radarr": {
       "library_id": "1",
       "url": "https://radarr.domain.tld",
       "apikey": ""
