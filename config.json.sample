@@ -1,0 +1,29 @@
+{
+  "plex_db": "/opt/plex/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
+  "plex_token": "",
+  "plex_url": "https://plex.domain.tld",
+  "radarr": {
+    "radarr2": {
+      "library_id": "1",
+      "url": "https://radarr.domain.tld",
+      "apikey": ""
+    },
+    "radarr4k": {
+      "library_id": "11",
+      "url": "https://radarr4k.domain.tld",
+      "apikey": ""
+    }
+  },
+  "sonarr": {
+    "sonarr": {
+      "library_id": "2",
+      "url": "https://sonarr.domain.tld",
+      "apikey": ""
+    },
+    "sonarr4k": {
+      "library_id": "12",
+      "url": "https://sonarr4k.domain.tld",
+      "apikey": ""
+    }
+  }
+}
