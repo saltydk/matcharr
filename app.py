@@ -20,6 +20,11 @@ radarrs_config = {}
 for x in radarr_config:
     radarrs_config[x] = config["radarr"][x]
 
+print(f"Loading Configuration took {config_timer.stop()} seconds.")
+
+media_timer = Timer()
+print("Loading Data From Plex, Sonarr & Radarr")
+
 media = {}
 media["sonarr"] = {}
 media["radarr"] = {}
@@ -29,14 +34,9 @@ for x in [*sonarrs_config]:
 for x in [*radarrs_config]:
     media["radarr"][x] = Arr(radarrs_config[x]["url"],radarrs_config[x]["apikey"],"movie").data
 
-print(f"Loading Configuration took {config_timer.stop()} seconds.")
-config_timer = Timer()
-
 sonarr = {}
 radarr = {}
 plexlibrary = {}
-media_timer = Timer()
-print("Loading Data From Plex, Sonarr & Radarr")
 
 for Arrs,mediaDB in media.items():
     for showDB,shows in mediaDB.items():
