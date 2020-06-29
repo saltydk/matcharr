@@ -1,3 +1,5 @@
 /config.json
 /Plex Match Fixer.iml
 /.idea/
+/Pipfile
+/Pipfile.lock

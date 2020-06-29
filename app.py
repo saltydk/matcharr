@@ -29,23 +29,23 @@ media = {}
 media["sonarr"] = {}
 media["radarr"] = {}
 for x in [*sonarrs_config]:
-    media["sonarr"][x] = Arr(sonarrs_config[x]["url"],sonarrs_config[x]["apikey"],"series").data
+    media["sonarr"][x] = Arr(sonarrs_config[x]["url"], sonarrs_config[x]["apikey"], "series").data
 
 for x in [*radarrs_config]:
-    media["radarr"][x] = Arr(radarrs_config[x]["url"],radarrs_config[x]["apikey"],"movie").data
+    media["radarr"][x] = Arr(radarrs_config[x]["url"], radarrs_config[x]["apikey"], "movie").data
 
 sonarr = {}
 radarr = {}
 plexlibrary = {}
 
-for Arrs,mediaDB in media.items():
-    for showDB,shows in mediaDB.items():
+for Arrs, mediaDB in media.items():
+    for showDB, shows in mediaDB.items():
         if Arrs == "sonarr":
-            sonarr[showDB] = [ArrMedia(seriesShow["title"],seriesShow["path"],seriesShow["tvdbId"]) for seriesShow in shows]
-            plexlibrary[showDB] = [Plex(row[0],row[1],row[2],row[3],row[4]) for row in PlexDB().shows(config["plex_db"],sonarrs_config[showDB]["library_id"])]
+            sonarr[showDB] = [ArrMedia(seriesShow["title"], seriesShow["path"], seriesShow["tvdbId"]) for seriesShow in shows]
+            plexlibrary[showDB] = [Plex(row[0], row[1], row[2], row[3], row[4]) for row in PlexDB().shows(config["plex_db"], sonarrs_config[showDB]["library_id"])]
         if Arrs == "radarr":
-            radarr[showDB] = [ArrMedia(movies["title"],movies["path"],movies["tmdbId"]) for movies in shows]
-            plexlibrary[showDB] = [Plex(row[0],row[1],row[2],row[3],row[4]) for row in PlexDB().movie(config["plex_db"],radarrs_config[showDB]["library_id"])]
+            radarr[showDB] = [ArrMedia(movies["title"], movies["path"], movies["tmdbId"]) for movies in shows]
+            plexlibrary[showDB] = [Plex(row[0], row[1], row[2], row[3], row[4]) for row in PlexDB().movie(config["plex_db"], radarrs_config[showDB]["library_id"])]
 
 print(f"Loading Data From Plex, Sonarr & Radarr took {media_timer.stop()} seconds.")
 
