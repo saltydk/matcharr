@@ -41,10 +41,10 @@ plexlibrary = {}
 for Arrs, mediaDB in media.items():
     for showDB, shows in mediaDB.items():
         if Arrs == "sonarr":
-            sonarr[showDB] = [ArrMedia(seriesShow["title"], seriesShow["path"], seriesShow["tvdbId"]) for seriesShow in shows]
+            sonarr[showDB] = [ArrMedia(seriesShow["title"], seriesShow["path"], seriesShow["tvdbId"], seriesShow["titleSlug"]) for seriesShow in shows]
             plexlibrary[showDB] = [Plex(row[0], row[1], row[2], row[3], row[4]) for row in PlexDB().shows(config["plex_db"], sonarrs_config[showDB]["library_id"])]
         if Arrs == "radarr":
-            radarr[showDB] = [ArrMedia(movies["title"], movies["path"], movies["tmdbId"]) for movies in shows]
+            radarr[showDB] = [ArrMedia(movies["title"], movies["path"], movies["tmdbId"], movies["titleSlug"]) for movies in shows]
             plexlibrary[showDB] = [Plex(row[0], row[1], row[2], row[3], row[4]) for row in PlexDB().movie(config["plex_db"], radarrs_config[showDB]["library_id"])]
 
 print(f"Loading Data From Plex, Sonarr & Radarr took {media_timer.stop()} seconds.")
@@ -58,10 +58,10 @@ for radarrDB in [*radarrs_config]:
     print(f"Checking {radarrDB}")
     radarr_showPanda = pd.DataFrame.from_records([item.to_dict() for item in radarr[radarrDB]])
     radarr_paths = radarr_showPanda["path"]
+    radarr_slugs = radarr_showPanda["slug"]
     radarr_duplicate = radarr_showPanda[radarr_paths.isin(radarr_paths[radarr_paths.duplicated()])]
-    for u in radarr_duplicate.values.tolist():
-        print(f"Duplicate folder paths in {radarrDB}")
-        break
+    for path, slug in zip(radarr_duplicate.values.tolist(), radarr_slugs.values.tolist()):
+        print(f"Duplicate path in item: {radarrs_config[radarrDB]['url']}/movie/{slug}")
 
 for sonarrDB in [*sonarrs_config]:
     sonarr_showPanda = pd.DataFrame()
@@ -70,10 +70,10 @@ for sonarrDB in [*sonarrs_config]:
     print(f"Checking {sonarrDB}")
     sonarr_showPanda = pd.DataFrame.from_records([item.to_dict() for item in sonarr[sonarrDB]])
     sonarr_paths = sonarr_showPanda["path"]
+    sonarr_slugs = sonarr_showPanda["slug"]
     sonarr_duplicate = sonarr_showPanda[sonarr_paths.isin(sonarr_paths[sonarr_paths.duplicated()])]
-    for u in radarr_duplicate.values.tolist():
-        print(f"Duplicate folder paths found in {sonarrDB}")
-        break
+    for path, slug in zip(sonarr_duplicate.values.tolist(), sonarr_slugs.values.tolist()):
+        print(f"Duplicate path in item: {sonarrs_config[sonarrDB]['url']}/series/{slug}")
 
 print(f"Checking for faulty data in Radarr & Sonarr took {faulty_timer.stop()} seconds.")
 
