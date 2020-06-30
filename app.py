@@ -59,7 +59,7 @@ print(f"Checking for Duplicate Media took {plex_duplicate_timer.stop()} seconds.
 
 if duplicate > 0:
     reload_timer = Timer()
-    print("Reloading Data due to duplicate items in Plex")
+    print("Reloading Data due to {duplicate} duplicate item(s) in Plex")
 
     sonarr = {}
     radarr = {}
@@ -77,3 +77,5 @@ compare_media(sonarrs_config, sonarr, plexlibrary, "thetvdb", config)
 
 print(f"Checking for Mismatched Media took {plex_mismatch_timer.stop()} seconds.")
 print(f"Running the program took {runtime.stop()} seconds.")
+
+exit(0)

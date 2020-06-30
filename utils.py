@@ -53,7 +53,6 @@ def check_duplicate(library, config):
         if len(plex_duplicates.index) > 0:
             duplicate += 1
 
-        print(plex_panda.loc[plex_panda['id'] == 248741])
         for metadataid in plex_duplicates.values.tolist():
             print(f"Splitting item with ID:{metadataid[2]}")
             url_params = {
