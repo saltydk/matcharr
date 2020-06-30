@@ -1,7 +1,9 @@
 import sqlite3
 
+
 class PlexDB:
-    def movie(self,db,libraryid):
+    @staticmethod
+    def movie(db, libraryid):
         conn = sqlite3.connect(db)
         c = conn.cursor()
 
@@ -23,7 +25,8 @@ class PlexDB:
 
         return c.fetchall()
 
-    def shows(self,db,libraryid):
+    @staticmethod
+    def shows(db, libraryid):
         conn = sqlite3.connect(db)
         c = conn.cursor()
 

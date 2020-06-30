@@ -1,8 +1,8 @@
 class ArrMedia:
-    def __init__(self,title,path,id,slug):
+    def __init__(self, title, path, mediaid, slug):
         self.title = title
         self.path = path
-        self.id = id
+        self.id = mediaid
         self.slug = slug
 
     def to_dict(self):
