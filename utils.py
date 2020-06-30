@@ -43,23 +43,26 @@ def check_faulty(config, arr):
 
 
 def check_duplicate(library, config):
+    duplicate = 0
+
     for arrDB in [*library]:
         plex_panda = pd.DataFrame.from_records([plex.to_dict() for plex in library[arrDB]])
         plex_ids = plex_panda["id"]
         plex_duplicates = plex_panda[plex_ids.isin(plex_ids[plex_ids.duplicated()])]
 
         if len(plex_duplicates.index) > 0:
-            duplicate = 1
+            duplicate += 1
 
+        print(plex_panda.loc[plex_panda['id'] == 248741])
         for metadataid in plex_duplicates.values.tolist():
             print(f"Splitting item with ID:{metadataid[2]}")
-            print(plex_panda.loc[plex_panda['id'] == metadataid[2]])
             url_params = {
                 'X-Plex-Token': config["plex_token"]
             }
             url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
             requests.options(url_str, params=url_params, timeout=30)
             requests.put(url_str, params=url_params, timeout=30)
+
     return duplicate
 
 
