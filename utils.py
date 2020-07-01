@@ -92,30 +92,29 @@ def check_duplicate(library, config, delay):
 
 
 def compare_media(arrconfig, arr, library, agent, config, delay):
-    for arrinstance in arrconfig:
-        for database in arrconfig[arrinstance]["library_id"]:
-            for items in arr[arrinstance]:
-                for plex_items in library[database]:
-                    if items.path == plex_items.fullpath:
-                        if items.id == plex_items.id:
-                            break
-                        else:
-                            print(f"{arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
-                            print(f"{arrinstance} id: {items.id} -- Plex id: {plex_items.id}")
+    for arrinstance in [*arrconfig]:
+        for items in arr[arrinstance]:
+            for plex_items in library[arrconfig[arrinstance].get("library_id")]:
+                if items.path == plex_items.fullpath:
+                    if items.id == plex_items.id:
+                        break
+                    else:
+                        print(f"{arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
+                        print(f"{arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
 
-                            plex_match(config["plex_url"],
-                                       config["plex_token"],
-                                       agent,
-                                       plex_items.metadataid,
-                                       items.id,
-                                       items.title)
+                        plex_match(config["plex_url"],
+                                   config["plex_token"],
+                                   agent,
+                                   plex_items.metadataid,
+                                   items.id,
+                                   items.title)
 
-                            plex_refresh(config["plex_url"],
-                                         config["plex_token"],
-                                         plex_items.metadataid)
+                        plex_refresh(config["plex_url"],
+                                     config["plex_token"],
+                                     plex_items.metadataid)
 
-                            print(f"Sleeping for {delay} seconds.")
-                            time.sleep(delay)
+                        print(f"Sleeping for {delay} seconds.")
+                        time.sleep(delay)
 
 
 def plex_match(url, token, agent, metadataid, agentid, title):
