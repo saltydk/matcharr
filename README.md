@@ -33,6 +33,7 @@ Then you will have to enter your sonarr and radarr instances into the config (re
   "plex_db": "/opt/plex/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
   "plex_token": "",
   "plex_url": "https://plex.domain.tld",
+  "delay": 10,
   "radarr": {
     "radarr": {
       "library_id": "1",
