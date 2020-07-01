@@ -57,9 +57,9 @@ duplicate = check_duplicate(plexlibrary, config)
 
 print(f"Checking for Duplicate Media took {plex_duplicate_timer.stop()} seconds.")
 
-if duplicate > 0:
+if duplicate == 1:
     reload_timer = Timer()
-    print("Reloading Data due to {duplicate} duplicate item(s) in Plex")
+    print(f"Reloading Data due to duplicate item(s) in Plex")
 
     sonarr = {}
     radarr = {}

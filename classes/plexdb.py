@@ -23,7 +23,9 @@ class PlexDB:
         where section_locations.library_section_id in (%s)
         and metadata_type in (1)""" % libraryid)
 
-        return c.fetchall()
+        result = c.fetchall()
+        conn.close()
+        return result
 
     @staticmethod
     def shows(db, libraryid):
@@ -58,4 +60,6 @@ class PlexDB:
         and metadata_items.metadata_type in (4)
         group by directories.parent_directory_id""" % libraryid)
 
-        return c.fetchall()
+        result = c.fetchall()
+        conn.close()
+        return result

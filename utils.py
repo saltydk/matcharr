@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import time
 from classes.arrmedia import ArrMedia
 from classes.plex import Plex
 from classes.plexdb import PlexDB
@@ -8,6 +9,7 @@ from classes.plexdb import PlexDB
 def load_data(media, sonarr, radarr, plexlibrary, config, sonarrs_config, radarrs_config):
     for Arrs, mediaDB in media.items():
         for showDB, shows in mediaDB.items():
+            print(f"Loading Data from {showDB}")
             if Arrs == "sonarr":
                 sonarr[showDB] = [ArrMedia(seriesShow["title"],
                                            seriesShow["path"],
@@ -30,6 +32,9 @@ def load_data(media, sonarr, radarr, plexlibrary, config, sonarrs_config, radarr
                                             row[3],
                                             row[4]) for row in PlexDB().movie(config["plex_db"],
                                                                               radarrs_config[showDB]["library_id"])]
+            sleep = 10
+            print(f"Sleeping for {sleep} seconds.")
+            time.sleep(sleep)
 
 
 def check_faulty(config, arr):
@@ -51,7 +56,7 @@ def check_duplicate(library, config):
         plex_duplicates = plex_panda[plex_ids.isin(plex_ids[plex_ids.duplicated()])]
 
         if len(plex_duplicates.index) > 0:
-            duplicate += 1
+            duplicate = 1
 
         for metadataid in plex_duplicates.values.tolist():
             print(f"Splitting item with ID:{metadataid[2]}")
@@ -60,7 +65,14 @@ def check_duplicate(library, config):
             }
             url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
             requests.options(url_str, params=url_params, timeout=30)
-            requests.put(url_str, params=url_params, timeout=30)
+            resp = requests.put(url_str, params=url_params, timeout=30)
+            if resp.status_code == 200:
+                print(f"Successfully split {int(metadataid[2])}")
+            else:
+                print(f"Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
+            sleep = 10
+            print(f"Sleeping for {sleep} seconds.")
+            time.sleep(sleep)
 
     return duplicate
 
@@ -84,6 +96,9 @@ def compare_media(arrconfig, arr, library, agent, config):
                         plex_refresh(config["plex_url"],
                                      config["plex_token"],
                                      plex_items.metadataid)
+                        sleep = 10
+                        print(f"Sleeping for {sleep} seconds.")
+                        time.sleep(sleep)
 
 
 def plex_match(url, token, agent, metadataid, agentid, title):
@@ -94,7 +109,11 @@ def plex_match(url, token, agent, metadataid, agentid, title):
     }
     url_str = '%s/library/metadata/%d/match' % (url, int(metadataid))
     requests.options(url_str, params=url_params, timeout=30)
-    requests.put(url_str, params=url_params, timeout=30)
+    resp = requests.put(url_str, params=url_params, timeout=30)
+    if resp.status_code == 200:
+        print(f"Successfully matched {int(metadataid)} to {title} ({agentid})")
+    else:
+        print(f"Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
 
 
 def plex_refresh(url, token, metadataid):
@@ -103,4 +122,8 @@ def plex_refresh(url, token, metadataid):
     }
     url_str = '%s/library/metadata/%d/refresh' % (url, int(metadataid))
     requests.options(url_str, params=url_params, timeout=30)
-    requests.put(url_str, params=url_params, timeout=30)
+    resp = requests.put(url_str, params=url_params, timeout=30)
+    if resp.status_code == 200:
+        print(f"Successfully refreshed {int(metadataid)}.")
+    else:
+        print(f"Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
