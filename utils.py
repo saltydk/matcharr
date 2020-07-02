@@ -64,8 +64,8 @@ def check_duplicate(library, config, delay):
 
     for arrDB in [*library]:
         plex_panda = pd.DataFrame.from_records([plex.to_dict() for plex in library[arrDB]])
-        plex_ids = plex_panda["id"]
-        plex_duplicates = plex_panda[plex_ids.isin(plex_ids[plex_ids.duplicated()])]
+        plex_dfobject = pd.DataFrame(plex_panda, columns=['title', 'id', 'metadataid'])
+        plex_duplicates = plex_dfobject[plex_dfobject.duplicated(['id'])]
 
         if len(plex_duplicates.index) > 0:
             duplicate = 1
