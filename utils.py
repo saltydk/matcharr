@@ -70,12 +70,7 @@ def check_duplicate(library, config, delay):
         if len(plex_duplicates.index) > 0:
             duplicate = 1
 
-        plex_duplicates_unique = []
-        for i in plex_duplicates.values.tolist():
-            if i not in plex_duplicates_unique:
-                plex_duplicates_unique.append(i)
-
-        for metadataid in plex_duplicates_unique:
+        for metadataid in plex_duplicates.values.tolist():
             plex_split(metadataid, config)
 
             time.sleep(delay)
