@@ -44,7 +44,6 @@ def load_plex_data(plexlibrary, config, plex_sections, delay):
                                          row[4]) for row in
                                     PlexDB().movie(config["plex_db"], section)]
 
-        print(f"Sleeping for {delay} seconds.")
         time.sleep(delay)
 
 
@@ -77,9 +76,8 @@ def check_duplicate(library, config, delay):
                 plex_duplicates_unique.append(i)
 
         for metadataid in plex_duplicates_unique:
-            plex_split(metadataid[2], config)
+            plex_split(metadataid, config)
 
-            print(f"Sleeping for {delay} seconds.")
             time.sleep(delay)
 
     return duplicate
@@ -107,7 +105,6 @@ def compare_media(arrconfig, arr, library, agent, config, delay):
                                      config["plex_token"],
                                      plex_items.metadataid)
 
-                        print(f"Sleeping for {delay} seconds.")
                         time.sleep(delay)
 
 
@@ -142,15 +139,15 @@ def plex_refresh(url, token, metadataid):
 
 
 def plex_split(metadataid, config):
-    print(f"Splitting item with ID:{metadataid}")
+    print(f"Splitting item with ID:{metadataid[2]}")
     url_params = {
         'X-Plex-Token': config["plex_token"]
     }
-    url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid))
+    url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
     requests.options(url_str, params=url_params, timeout=30)
     resp = requests.put(url_str, params=url_params, timeout=30)
 
     if resp.status_code == 200:
-        print(f"Successfully split {int(metadataid)}")
+        print(f"Successfully split {int(metadataid[2])}")
     else:
-        print(f"Failed to split {int(metadataid)} - Plex returned error: {resp.text}")
+        print(f"Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
