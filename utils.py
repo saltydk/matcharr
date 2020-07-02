@@ -71,19 +71,13 @@ def check_duplicate(library, config, delay):
         if len(plex_duplicates.index) > 0:
             duplicate = 1
 
-        for metadataid in plex_duplicates.values.tolist():
-            print(f"Splitting item with ID:{metadataid[2]}")
-            url_params = {
-                'X-Plex-Token': config["plex_token"]
-            }
-            url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
-            requests.options(url_str, params=url_params, timeout=30)
-            resp = requests.put(url_str, params=url_params, timeout=30)
+        plex_duplicates_unique = []
+        for i in plex_duplicates.values.tolist():
+            if i not in plex_duplicates_unique:
+                plex_duplicates_unique.append(i)
 
-            if resp.status_code == 200:
-                print(f"Successfully split {int(metadataid[2])}")
-            else:
-                print(f"Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
+        for metadataid in plex_duplicates_unique:
+            plex_split(metadataid[2], config)
 
             print(f"Sleeping for {delay} seconds.")
             time.sleep(delay)
@@ -145,3 +139,18 @@ def plex_refresh(url, token, metadataid):
         print(f"Successfully refreshed {int(metadataid)}.")
     else:
         print(f"Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
+
+
+def plex_split(metadataid, config):
+    print(f"Splitting item with ID:{metadataid}")
+    url_params = {
+        'X-Plex-Token': config["plex_token"]
+    }
+    url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid))
+    requests.options(url_str, params=url_params, timeout=30)
+    resp = requests.put(url_str, params=url_params, timeout=30)
+
+    if resp.status_code == 200:
+        print(f"Successfully split {int(metadataid)}")
+    else:
+        print(f"Failed to split {int(metadataid)} - Plex returned error: {resp.text}")
