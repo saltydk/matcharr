@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import requests.exceptions
 import time
 from classes.arrmedia import ArrMedia
 from classes.plex import Plex
@@ -71,7 +72,7 @@ def check_duplicate(library, config, delay):
             duplicate = 1
 
         for metadataid in plex_duplicates.values.tolist():
-            plex_split(metadataid, config)
+            plex_split(metadataid, config, delay)
 
             time.sleep(delay)
 
@@ -128,21 +129,31 @@ def plex_refresh(url, token, metadataid):
     resp = requests.put(url_str, params=url_params, timeout=30)
 
     if resp.status_code == 200:
-        print(f"Successfully refreshed {int(metadataid)}.")
+        print(f"Successfully refreshed {int(metadataid)}")
     else:
         print(f"Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
 
 
-def plex_split(metadataid, config):
-    print(f"Splitting item with ID:{metadataid[2]}")
-    url_params = {
-        'X-Plex-Token': config["plex_token"]
-    }
-    url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
-    requests.options(url_str, params=url_params, timeout=30)
-    resp = requests.put(url_str, params=url_params, timeout=30)
+def plex_split(metadataid, config, delay):
+    retries = 5
+    while retries > 0:
+        try:
+            print(f"Splitting item with ID:{metadataid[2]}")
+            url_params = {
+                'X-Plex-Token': config["plex_token"]
+            }
+            url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
+            requests.options(url_str, params=url_params, timeout=30)
+            resp = requests.put(url_str, params=url_params, timeout=30)
 
-    if resp.status_code == 200:
-        print(f"Successfully split {int(metadataid[2])}")
-    else:
-        print(f"Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
+            if resp.status_code == 200:
+                print(f"Successfully split {int(metadataid[2])}.")
+            else:
+                print(f"Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
+            break
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
+            print(f"Exception splitting {int(metadataid[2])} - {retries} left.")
+            retries -= 1
+            time.sleep(delay)
+    if retries == 0:
+        raise Exception(f"Exception splitting {int(metadataid[2])} - Ran out of retries.")
