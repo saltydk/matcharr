@@ -2,15 +2,19 @@ import pandas as pd
 import requests
 import requests.exceptions
 import time
+from time import gmtime, strftime
 from classes.arrmedia import ArrMedia
 from classes.plex import Plex
 from classes.plexdb import PlexDB
+
+def timeoutput():
+    return strftime('%d %b %Y %H:%M:%S', gmtime())
 
 
 def load_arr_data(media, sonarr, radarr):
     for Arrs, mediaDB in media.items():
         for showDB, shows in mediaDB.items():
-            print(f"Loading data from {showDB}")
+            print(f"{timeoutput()} - Loading data from {showDB}")
 
             if Arrs == "sonarr":
                 sonarr[showDB] = [ArrMedia(seriesShow["title"],
@@ -27,7 +31,7 @@ def load_arr_data(media, sonarr, radarr):
 
 def load_plex_data(plexlibrary, config, plex_sections, delay):
     for section, mediatype in plex_sections.items():
-        print(f"Loading Plex Library Section: {section}")
+        print(f"{timeoutput()} - Loading Plex Library Section: {section}")
 
         if mediatype == "shows":
             plexlibrary[section] = [Plex(row[0],
@@ -50,14 +54,14 @@ def load_plex_data(plexlibrary, config, plex_sections, delay):
 
 def check_faulty(config, arr):
     for database in [*config]:
-        print(f"Checking {database}")
+        print(f"{timeoutput()} - Checking {database}")
 
         database_panda = pd.DataFrame.from_records([item.to_dict() for item in arr[database]])
         database_paths = database_panda["path"]
         database_duplicate = database_panda[database_paths.isin(database_paths[database_paths.duplicated()])]
 
         for path in database_duplicate.values.tolist():
-            print(f"Duplicate path in item: {path}")
+            print(f"{timeoutput()} - Duplicate path in item: {path}")
 
 
 def check_duplicate(library, config, delay):
@@ -87,51 +91,75 @@ def compare_media(arrconfig, arr, library, agent, config, delay):
                     if items.id == plex_items.id:
                         break
                     else:
-                        print(f"{arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
-                        print(f"{arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
+                        print(f"{timeoutput()} - {arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
+                        print(f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
+                        print(f"{timeoutput()} - Plex metadata ID: {plex_items.metadataid}")
 
-                        plex_match(config["plex_url"],
-                                   config["plex_token"],
-                                   agent,
-                                   plex_items.metadataid,
-                                   items.id,
-                                   items.title)
+                        try:
+                            plex_match(config["plex_url"],
+                                       config["plex_token"],
+                                       agent,
+                                       plex_items.metadataid,
+                                       items.id,
+                                       items.title,
+                                       delay)
 
-                        plex_refresh(config["plex_url"],
-                                     config["plex_token"],
-                                     plex_items.metadataid)
+                            plex_refresh(config["plex_url"],
+                                         config["plex_token"],
+                                         plex_items.metadataid,
+                                         delay)
 
-                        time.sleep(delay)
-
-
-def plex_match(url, token, agent, metadataid, agentid, title):
-    url_params = {
-        'X-Plex-Token': token,
-        'guid': 'com.plexapp.agents.{}://{}?lang=en'.format(agent, agentid),
-        'name': title,
-    }
-    url_str = '%s/library/metadata/%d/match' % (url, int(metadataid))
-    requests.options(url_str, params=url_params, timeout=30)
-    resp = requests.put(url_str, params=url_params, timeout=30)
-
-    if resp.status_code == 200:
-        print(f"Successfully matched {int(metadataid)} to {title} ({agentid})")
-    else:
-        print(f"Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
+                            time.sleep(delay)
+                        except TypeError:
+                            print(f"{timeoutput()} - Plex metadata ID appears to be missing.")
 
 
-def plex_refresh(url, token, metadataid):
-    url_params = {
-        'X-Plex-Token': token
-    }
-    url_str = '%s/library/metadata/%d/refresh' % (url, int(metadataid))
-    requests.options(url_str, params=url_params, timeout=30)
-    resp = requests.put(url_str, params=url_params, timeout=30)
+def plex_match(url, token, agent, metadataid, agentid, title, delay):
+    retries = 5
+    while retries > 0:
+        try:
+            url_params = {
+                'X-Plex-Token': token,
+                'guid': 'com.plexapp.agents.{}://{}?lang=en'.format(agent, agentid),
+                'name': title,
+            }
+            url_str = '%s/library/metadata/%d/match' % (url, int(metadataid))
+            requests.options(url_str, params=url_params, timeout=30)
+            resp = requests.put(url_str, params=url_params, timeout=30)
 
-    if resp.status_code == 200:
-        print(f"Successfully refreshed {int(metadataid)}")
-    else:
-        print(f"Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
+            if resp.status_code == 200:
+                print(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
+            else:
+                print(f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
+            print(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
+            retries -= 1
+            time.sleep(delay)
+    if retries == 0:
+        raise Exception(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
+
+
+def plex_refresh(url, token, metadataid, delay):
+    retries = 5
+    while retries > 0:
+        try:
+            url_params = {
+                'X-Plex-Token': token
+            }
+            url_str = '%s/library/metadata/%d/refresh' % (url, int(metadataid))
+            requests.options(url_str, params=url_params, timeout=30)
+            resp = requests.put(url_str, params=url_params, timeout=30)
+
+            if resp.status_code == 200:
+                print(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
+            else:
+                print(f"{timeoutput()} - Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
+            print(f"{timeoutput()} - Exception refreshing {int(metadataid)} - {retries} left.")
+            retries -= 1
+            time.sleep(delay)
+    if retries == 0:
+        raise Exception(f"{timeoutput()} - Exception refreshing {int(metadataid)} - Ran out of retries.")
 
 
 def plex_split(metadataid, config, delay):
@@ -147,13 +175,13 @@ def plex_split(metadataid, config, delay):
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
-                print(f"Successfully split {int(metadataid[2])}.")
+                print(f"{timeoutput()} - Successfully split {int(metadataid[2])}.")
             else:
-                print(f"Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
+                print(f"{timeoutput()} - Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            print(f"Exception splitting {int(metadataid[2])} - {retries} left.")
+            print(f"{timeoutput()} - Exception splitting {int(metadataid[2])} - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
-        raise Exception(f"Exception splitting {int(metadataid[2])} - Ran out of retries.")
+        raise Exception(f"{timeoutput()} - Exception splitting {int(metadataid[2])} - Ran out of retries.")
