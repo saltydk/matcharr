@@ -7,6 +7,7 @@ from classes.arrmedia import ArrMedia
 from classes.plex import Plex
 from classes.plexdb import PlexDB
 
+
 def timeoutput():
     return strftime('%d %b %Y %H:%M:%S', gmtime())
 

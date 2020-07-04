@@ -12,6 +12,7 @@ radarr_config = [*config["radarr"]]
 delay = config["delay"]
 plex_sections = {}
 sonarrs_config = {}
+
 for x in sonarr_config:
     sonarrs_config[x] = config["sonarr"][x]
     plex_sections[config["sonarr"][x]["library_id"]] = "shows"

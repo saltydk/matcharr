@@ -2,6 +2,7 @@ Current assumptions / limitations:
 * Agents for movies are tmdb (Plex Movie can also use tmdb) and not imdb.
 * Agents for shows are tvdb which means no HAMA or tmdb.
 * Identical root paths in sonarr,radarr and Plex.
+* Assumes that you are using a similar directory structure to the ones recommended by Plex. This for [movies](https://support.plex.tv/articles/naming-and-organizing-your-movie-media-files/) and this for [TV Shows](https://support.plex.tv/articles/naming-and-organizing-your-tv-show-files/). If you deviate from the structure you should assume that this script will not work for your setup. Names of the files/folders are not important as long as they are unique since we use the data in the various sonarr/radarr instances to figure out which is which and not relying on Plex to guess.
 
 Use something like [Plex Autoscan](https://github.com/l3uddz/plex_autoscan) to identify the IDs of your libraries. Below is a snippet from the Plex Autoscan readme:
 ### Plex Section IDs
