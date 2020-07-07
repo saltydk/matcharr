@@ -132,6 +132,7 @@ def plex_match(url, token, agent, metadataid, agentid, title, delay):
                 print(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
             else:
                 print(f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
+            break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
             print(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
             retries -= 1
@@ -155,6 +156,7 @@ def plex_refresh(url, token, metadataid, delay):
                 print(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
             else:
                 print(f"{timeoutput()} - Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
+            break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
             print(f"{timeoutput()} - Exception refreshing {int(metadataid)} - {retries} left.")
             retries -= 1
