@@ -2,14 +2,17 @@ import pandas as pd
 import requests
 import requests.exceptions
 import time
-from time import gmtime, strftime
+from datetime import datetime
 from classes.arrmedia import ArrMedia
 from classes.plex import Plex
+from classes.emby import Emby
 from classes.plexdb import PlexDB
+from classes.embydb import EmbyDB
 
 
 def timeoutput():
-    return strftime('%d %b %Y %H:%M:%S', gmtime())
+    now = datetime.now()
+    return now.strftime('%d %b %Y %H:%M:%S')
 
 
 def load_arr_data(media, sonarr, radarr):
@@ -84,16 +87,21 @@ def check_duplicate(library, config, delay):
     return duplicate
 
 
-def compare_media(arrconfig, arr, library, agent, config, delay):
+def plex_compare_media(arrconfig, arr, library, agent, config, delay):
     for arrinstance in [*arrconfig]:
+        if arrconfig[arrinstance]["plex_library_id"] == "None":
+            print(f"{timeoutput()} - {arrinstance} is not configured for Plex")
+            continue
         for items in arr[arrinstance]:
-            for plex_items in library[arrconfig[arrinstance].get("library_id")]:
+            for plex_items in library[arrconfig[arrinstance].get("plex_library_id")]:
                 if items.path == plex_items.fullpath:
                     if items.id == plex_items.id:
                         break
                     else:
-                        print(f"{timeoutput()} - {arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
-                        print(f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
+                        print(
+                            f"{timeoutput()} - {arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
+                        print(
+                            f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
                         print(f"{timeoutput()} - Plex metadata ID: {plex_items.metadataid}")
 
                         try:
@@ -131,14 +139,16 @@ def plex_match(url, token, agent, metadataid, agentid, title, delay):
             if resp.status_code == 200:
                 print(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
             else:
-                print(f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
+                print(
+                    f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
             print(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
-        raise Exception(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
+        raise Exception(
+            f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
 
 
 def plex_refresh(url, token, metadataid, delay):
@@ -188,3 +198,77 @@ def plex_split(metadataid, config, delay):
             time.sleep(delay)
     if retries == 0:
         raise Exception(f"{timeoutput()} - Exception splitting {int(metadataid[2])} - Ran out of retries.")
+
+
+def load_emby_data(config, emby_sections, embylibrary):
+    for section in emby_sections:
+        print(f"{timeoutput()} - Loading Emby Library Section: {section}")
+
+        embylibrary[section] = [Emby(row['Path'],
+                                     row['ProviderIds'],
+                                     row['Id'],
+                                     row['Name']) for row in
+                                EmbyDB().data(config, section)]
+
+
+def emby_compare_media(arrconfig, arr, library, agent, config, delay):
+    for arrinstance in [*arrconfig]:
+        if arrconfig[arrinstance]["emby_library_id"] == "None":
+            print(f"{timeoutput()} - {arrinstance} is not configured for Emby")
+            continue
+        for items in arr[arrinstance]:
+            for emby_items in library[arrconfig[arrinstance].get("emby_library_id")]:
+                if items.path == emby_items.path:
+                    if emby_items.id.get(agent):
+                        if str(items.id) == emby_items.id.get(agent):
+                            break
+                        else:
+                            print(
+                                f"{timeoutput()} - {arrinstance} title: {items.title} did not match Emby title: {emby_items.title}")
+                            print(
+                                f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Emby {agent} id: {emby_items.id.get(agent)}")
+                            print(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
+
+                            try:
+                                emby_match(config["emby_url"],
+                                           config["emby_token"],
+                                           emby_items.metadataid,
+                                           items.title,
+                                           agent,
+                                           items.id,
+                                           delay)
+    
+                                time.sleep(delay)
+                            except TypeError:
+                                print(f"{timeoutput()} - Emby metadata ID appears to be missing.")
+
+
+def emby_match(url, token, metadataid, title, agent, agentid, delay):
+    retries = 5
+    while retries > 0:
+        try:
+            params = (
+                ('ReplaceAllImages', 'true'),
+                ('api_key', token),
+            )
+            url_str = '%s/emby/Items/RemoteSearch/Apply/%d?ReplaceAllImages=true' % (url, int(metadataid))
+            headers = {
+                'accept': '*/*',
+                'Content-Type': 'application/json',
+            }
+            data = f'{{"ProviderIds":{{"{agent}":"{agentid}"}}}}'
+            resp = requests.post(url_str, headers=headers, params=params, data=data, timeout=300)
+
+            if resp.status_code == 200 or resp.status_code == 204:
+                print(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
+            else:
+                print(
+                    f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Emby returned error: {resp.text}")
+            break
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
+            print(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
+            retries -= 1
+            time.sleep(delay)
+    if retries == 0:
+        raise Exception(
+            f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
