@@ -1,7 +1,7 @@
 Current assumptions / limitations:
 * Agents for movies are tmdb (Plex Movie can also use tmdb) and not imdb.
 * Agents for shows are tvdb which means no HAMA or tmdb.
-* Identical root paths in sonarr,radarr and Plex.
+* Identical root paths in sonarr, radarr and Plex.
 * Assumes that you are using a similar directory structure to the ones recommended by Plex. 
 This for [movies](https://support.plex.tv/articles/naming-and-organizing-your-movie-media-files/) 
 and this for [TV Shows](https://support.plex.tv/articles/naming-and-organizing-your-tv-show-files/). 
@@ -42,7 +42,6 @@ Then you will have to enter your sonarr and radarr instances into the config
 
 ```
 {
-  "plex_db": "/opt/plex/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
   "plex_token": "",
   "plex_url": "https://plex.domain.tld",
   "plex_enabled": false,

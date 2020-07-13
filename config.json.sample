@@ -1,5 +1,4 @@
 {
-  "plex_db": "/opt/plex/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
   "plex_token": "",
   "plex_url": "https://plex.domain.tld",
   "plex_enabled": false,

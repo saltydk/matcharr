@@ -2,11 +2,13 @@ import pandas as pd
 import requests
 import requests.exceptions
 import time
+from plexapi.library import MovieSection
+from plexapi.library import ShowSection
+from tqdm import tqdm
 from datetime import datetime
 from classes.arrmedia import ArrMedia
 from classes.plex import Plex
 from classes.emby import Emby
-from classes.plexdb import PlexDB
 from classes.embydb import EmbyDB
 
 
@@ -15,11 +17,14 @@ def timeoutput():
     return now.strftime('%d %b %Y %H:%M:%S')
 
 
-def load_arr_data(media, sonarr, radarr):
+def giefbar(iterator, desc):
+    return tqdm(iterator, desc=desc + ":",
+                bar_format="{desc:80} {percentage:3.0f}%|{bar}| {n_fmt:^5}/{total_fmt:^5} [{elapsed_s:5.0f} s]")
+
+
+def parse_arr_data(media, sonarr, radarr):
     for Arrs, mediaDB in media.items():
         for showDB, shows in mediaDB.items():
-            print(f"{timeoutput()} - Loading data from {showDB}")
-
             if Arrs == "sonarr":
                 sonarr[showDB] = [ArrMedia(seriesShow["title"],
                                            seriesShow["path"],
@@ -33,32 +38,30 @@ def load_arr_data(media, sonarr, radarr):
                                            movies["titleSlug"]) for movies in shows]
 
 
-def load_plex_data(plexlibrary, config, plex_sections, delay):
-    for section, mediatype in plex_sections.items():
-        print(f"{timeoutput()} - Loading Plex Library Section: {section}")
+def load_plex_data(server, plex_sections, plexlibrary, mapping):
+    for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Loading data from Plex'):
+        section = server.library.sectionByID(str(sectionid))
+        media = section.all()
 
         if mediatype == "shows":
-            plexlibrary[section] = [Plex(row[0],
-                                         row[1],
-                                         row[2],
-                                         row[3],
-                                         row[4]) for row in
-                                    PlexDB().shows(config["plex_db"], section)]
+            plexlibrary[sectionid] = [Plex(row.locations,
+                                           mapping,
+                                           row.guid,
+                                           row.ratingKey,
+                                           row.title) for row in
+                                      media]
 
         if mediatype == "movie":
-            plexlibrary[section] = [Plex(row[0],
-                                         row[1],
-                                         row[2],
-                                         row[3],
-                                         row[4]) for row in
-                                    PlexDB().movie(config["plex_db"], section)]
-
-        time.sleep(delay)
+            plexlibrary[sectionid] = [Plex(row.locations,
+                                           mapping,
+                                           row.guid,
+                                           row.ratingKey,
+                                           row.title) for row in
+                                      media]
 
 
-def check_faulty(config, arr):
-    for database in [*config]:
-        print(f"{timeoutput()} - Checking {database}")
+def check_faulty(config, arr, arrtype):
+    for database in giefbar([*config], f'{timeoutput()} - Checking for faulty data in {arrtype}'):
 
         database_panda = pd.DataFrame.from_records([item.to_dict() for item in arr[database]])
         database_paths = database_panda["path"]
@@ -68,41 +71,42 @@ def check_faulty(config, arr):
             print(f"{timeoutput()} - Duplicate path in item: {path}")
 
 
-def check_duplicate(library, config, delay):
+def check_duplicate(server, config, delay):
     duplicate = 0
+    plex_sections = server.library.sections()
 
-    for arrDB in [*library]:
-        plex_panda = pd.DataFrame.from_records([plex.to_dict() for plex in library[arrDB]])
-        plex_dfobject = pd.DataFrame(plex_panda, columns=['title', 'id', 'metadataid'])
-        plex_duplicates = plex_dfobject[plex_dfobject.duplicated(['id'])]
+    for section in giefbar(plex_sections, f'{timeoutput()} - Checking for duplicate in Plex'):
+        if isinstance(section, MovieSection):
+            for x in section.search(libtype="movie", duplicate=True):
+                duplicate += 1
+                plex_split(x.ratingKey, config, delay)
+                time.sleep(delay)
 
-        if len(plex_duplicates.index) > 0:
-            duplicate = 1
-
-        for metadataid in plex_duplicates.values.tolist():
-            plex_split(metadataid, config, delay)
-
-            time.sleep(delay)
+        if isinstance(section, ShowSection):
+            for x in section.search(libtype="show", duplicate=True):
+                if len(x.locations) > 1:
+                    duplicate += 1
+                    plex_split(x.ratingKey, config, delay)
+                    time.sleep(delay)
 
     return duplicate
 
 
 def plex_compare_media(arrconfig, arr, library, agent, config, delay):
-    for arrinstance in [*arrconfig]:
+    for arrinstance in arrconfig.keys():
         if arrconfig[arrinstance]["plex_library_id"] == "None":
-            print(f"{timeoutput()} - {arrinstance} is not configured for Plex")
             continue
-        for items in arr[arrinstance]:
+        for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking Plex against {arrinstance}'):
             for plex_items in library[arrconfig[arrinstance].get("plex_library_id")]:
                 if items.path == plex_items.fullpath:
                     if items.id == plex_items.id:
                         break
                     else:
-                        print(
+                        tqdm.write(
                             f"{timeoutput()} - {arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
-                        print(
+                        tqdm.write(
                             f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
-                        print(f"{timeoutput()} - Plex metadata ID: {plex_items.metadataid}")
+                        tqdm.write(f"{timeoutput()} - Plex metadata ID: {plex_items.metadataid}")
 
                         try:
                             plex_match(config["plex_url"],
@@ -120,7 +124,7 @@ def plex_compare_media(arrconfig, arr, library, agent, config, delay):
 
                             time.sleep(delay)
                         except TypeError:
-                            print(f"{timeoutput()} - Plex metadata ID appears to be missing.")
+                            tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
 
 
 def plex_match(url, token, agent, metadataid, agentid, title, delay):
@@ -137,13 +141,14 @@ def plex_match(url, token, agent, metadataid, agentid, title, delay):
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
-                print(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
+                tqdm.write(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
             else:
-                print(
+                tqdm.write(
                     f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            print(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
+            tqdm.write(
+                f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
@@ -163,12 +168,12 @@ def plex_refresh(url, token, metadataid, delay):
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
-                print(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
+                tqdm.write(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
             else:
-                print(f"{timeoutput()} - Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
+                tqdm.write(f"{timeoutput()} - Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            print(f"{timeoutput()} - Exception refreshing {int(metadataid)} - {retries} left.")
+            tqdm.write(f"{timeoutput()} - Exception refreshing {int(metadataid)} - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
@@ -179,31 +184,29 @@ def plex_split(metadataid, config, delay):
     retries = 5
     while retries > 0:
         try:
-            print(f"Splitting item with ID:{metadataid[2]}")
+            tqdm.write(f"{timeoutput()} - Splitting item with ID:{metadataid}")
             url_params = {
                 'X-Plex-Token': config["plex_token"]
             }
-            url_str = '%s/library/metadata/%d/split' % (config["plex_url"], int(metadataid[2]))
+            url_str = '%s/library/metadata/%d/split' % (config["plex_url"], metadataid)
             requests.options(url_str, params=url_params, timeout=30)
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
-                print(f"{timeoutput()} - Successfully split {int(metadataid[2])}.")
+                tqdm.write(f"{timeoutput()} - Successfully split {metadataid}.")
             else:
-                print(f"{timeoutput()} - Failed to split {int(metadataid[2])} - Plex returned error: {resp.text}")
+                tqdm.write(f"{timeoutput()} - Failed to split {metadataid} - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            print(f"{timeoutput()} - Exception splitting {int(metadataid[2])} - {retries} left.")
+            tqdm.write(f"{timeoutput()} - Exception splitting {metadataid} - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
-        raise Exception(f"{timeoutput()} - Exception splitting {int(metadataid[2])} - Ran out of retries.")
+        raise Exception(f"{timeoutput()} - Exception splitting {metadataid} - Ran out of retries.")
 
 
 def load_emby_data(config, emby_sections, embylibrary):
-    for section in emby_sections:
-        print(f"{timeoutput()} - Loading Emby Library Section: {section}")
-
+    for section in giefbar(emby_sections, f'{timeoutput()} - Loading data from Emby'):
         embylibrary[section] = [Emby(row['Path'],
                                      row['ProviderIds'],
                                      row['Id'],
@@ -212,22 +215,21 @@ def load_emby_data(config, emby_sections, embylibrary):
 
 
 def emby_compare_media(arrconfig, arr, library, agent, config, delay):
-    for arrinstance in [*arrconfig]:
+    for arrinstance in arrconfig.keys():
         if arrconfig[arrinstance]["emby_library_id"] == "None":
-            print(f"{timeoutput()} - {arrinstance} is not configured for Emby")
             continue
-        for items in arr[arrinstance]:
+        for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking {arrinstance}'):
             for emby_items in library[arrconfig[arrinstance].get("emby_library_id")]:
                 if items.path == emby_items.path:
                     if emby_items.id.get(agent):
                         if str(items.id) == emby_items.id.get(agent):
                             break
                         else:
-                            print(
+                            tqdm.write(
                                 f"{timeoutput()} - {arrinstance} title: {items.title} did not match Emby title: {emby_items.title}")
-                            print(
+                            tqdm.write(
                                 f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Emby {agent} id: {emby_items.id.get(agent)}")
-                            print(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
+                            tqdm.write(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
 
                             try:
                                 emby_match(config["emby_url"],
@@ -237,10 +239,10 @@ def emby_compare_media(arrconfig, arr, library, agent, config, delay):
                                            agent,
                                            items.id,
                                            delay)
-    
+
                                 time.sleep(delay)
                             except TypeError:
-                                print(f"{timeoutput()} - Emby metadata ID appears to be missing.")
+                                tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
 
 
 def emby_match(url, token, metadataid, title, agent, agentid, delay):
@@ -260,13 +262,14 @@ def emby_match(url, token, metadataid, title, agent, agentid, delay):
             resp = requests.post(url_str, headers=headers, params=params, data=data, timeout=300)
 
             if resp.status_code == 200 or resp.status_code == 204:
-                print(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
+                tqdm.write(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
             else:
-                print(
+                tqdm.write(
                     f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Emby returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            print(f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
+            tqdm.write(
+                f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
