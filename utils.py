@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 import requests.exceptions
 import time
+import os
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 from tqdm import tqdm
@@ -22,6 +23,15 @@ def giefbar(iterator, desc):
                 bar_format="{desc:80} {percentage:3.0f}%|{bar}| {n_fmt:^5}/{total_fmt:^5} [{elapsed_s:5.0f} s]")
 
 
+# Audaciously stolen from https://github.com/l3uddz/plex_autoscan/
+def map_path(config, path):
+    for mapped_path, mappings in config['path_mappings'].items():
+        for mapping in mappings:
+            if path.startswith(mapping):
+                return path.replace(mapping, mapped_path)
+    return path
+
+
 def parse_arr_data(media, sonarr, radarr):
     for Arrs, mediaDB in media.items():
         for showDB, shows in mediaDB.items():
@@ -38,22 +48,51 @@ def parse_arr_data(media, sonarr, radarr):
                                            movies["titleSlug"]) for movies in shows]
 
 
-def load_plex_data(server, plex_sections, plexlibrary, mapping):
+def get_arrpaths(paths):
+    arrpaths = {}
+    for arrtype in paths.keys():
+        arrpaths[arrtype] = {}
+        for arr, data in paths[arrtype].items():
+            x = 0
+            arrpaths[arrtype][arr] = {}
+            for path in data:
+                arrpaths[arrtype][arr][x] = path.get('path')
+                x += 1
+    return arrpaths
+
+
+def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections):
+    for arrtype in arrpaths.keys():
+        arr_plex_match[arrtype] = {}
+        if arrtype == "sonarr":
+            string = "shows"
+        if arrtype == "radarr":
+            string = "movie"
+        for arr in arrpaths[arrtype].keys():
+            arr_plex_match[arrtype][arr] = {}
+            for arr_path in arrpaths[arrtype][arr].values():
+                for library in plex_library_paths.keys():
+                    for plex_path in plex_library_paths[library].values():
+                        if arr_path == os.path.join(plex_path, ''):
+                            arr_plex_match[arrtype][arr][arr_path] = {"plex_library_id": library}
+                            plex_sections[library] = string
+    return arr_plex_match
+
+
+def load_plex_data(server, plex_sections, plexlibrary, config):
     for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Loading data from Plex'):
         section = server.library.sectionByID(str(sectionid))
         media = section.all()
 
         if mediatype == "shows":
-            plexlibrary[sectionid] = [Plex(row.locations,
-                                           mapping,
+            plexlibrary[sectionid] = [Plex(map_path(config, str(row.locations[0])),
                                            row.guid,
                                            row.ratingKey,
                                            row.title) for row in
                                       media]
 
         if mediatype == "movie":
-            plexlibrary[sectionid] = [Plex(row.locations,
-                                           mapping,
+            plexlibrary[sectionid] = [Plex(map_path(config, str(row.locations[0])),
                                            row.guid,
                                            row.ratingKey,
                                            row.title) for row in
@@ -71,11 +110,11 @@ def check_faulty(config, arr, arrtype):
             print(f"{timeoutput()} - Duplicate path in item: {path}")
 
 
-def check_duplicate(server, config, delay):
+def check_duplicate(server, plex_sections, config, delay):
     duplicate = 0
-    plex_sections = server.library.sections()
 
-    for section in giefbar(plex_sections, f'{timeoutput()} - Checking for duplicate in Plex'):
+    for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Checking for duplicate in Plex'):
+        section = server.library.sectionByID(str(sectionid))
         if isinstance(section, MovieSection):
             for x in section.search(libtype="movie", duplicate=True):
                 duplicate += 1
@@ -92,39 +131,50 @@ def check_duplicate(server, config, delay):
     return duplicate
 
 
-def plex_compare_media(arrconfig, arr, library, agent, config, delay):
-    for arrinstance in arrconfig.keys():
-        if arrconfig[arrinstance]["plex_library_id"] == "None":
-            continue
-        for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking Plex against {arrinstance}'):
-            for plex_items in library[arrconfig[arrinstance].get("plex_library_id")]:
-                if items.path == plex_items.fullpath:
-                    if items.id == plex_items.id:
-                        break
-                    else:
-                        tqdm.write(
-                            f"{timeoutput()} - {arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
-                        tqdm.write(
-                            f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
-                        tqdm.write(f"{timeoutput()} - Plex metadata ID: {plex_items.metadataid}")
+def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
+    counter = 0
+    for arrtype in arr_plex_match.keys():
+        if arrtype == "sonarr":
+            agent = "thetvdb"
+            arr = sonarr
+        if arrtype == "radarr":
+            agent = "themoviedb"
+            arr = radarr
+        for arrinstance in arr_plex_match[arrtype].keys():
+            if len(arrinstance) == 0:
+                continue
+            for folder in arr_plex_match[arrtype][arrinstance].values():
+                for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking Plex against {arrinstance}'):
+                    for plex_items in library[folder.get("plex_library_id")]:
+                        if items.path == plex_items.fullpath:
+                            if items.id == plex_items.id:
+                                break
+                            else:
+                                tqdm.write(
+                                    f"{timeoutput()} - {arrinstance} title: {items.title} did not match Plex title: {plex_items.title}")
+                                tqdm.write(
+                                    f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Plex {agent} id: {plex_items.id}")
+                                tqdm.write(f"{timeoutput()} - Plex metadata ID: {plex_items.metadataid}")
 
-                        try:
-                            plex_match(config["plex_url"],
-                                       config["plex_token"],
-                                       agent,
-                                       plex_items.metadataid,
-                                       items.id,
-                                       items.title,
-                                       delay)
+                                try:
+                                    plex_match(config["plex_url"],
+                                               config["plex_token"],
+                                               agent,
+                                               plex_items.metadataid,
+                                               items.id,
+                                               items.title,
+                                               delay)
 
-                            plex_refresh(config["plex_url"],
-                                         config["plex_token"],
-                                         plex_items.metadataid,
-                                         delay)
+                                    plex_refresh(config["plex_url"],
+                                                 config["plex_token"],
+                                                 plex_items.metadataid,
+                                                 delay)
 
-                            time.sleep(delay)
-                        except TypeError:
-                            tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
+                                    time.sleep(delay)
+                                except TypeError:
+                                    tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
+                                counter += 1
+    return counter
 
 
 def plex_match(url, token, agent, metadataid, agentid, title, delay):
@@ -184,7 +234,7 @@ def plex_split(metadataid, config, delay):
     retries = 5
     while retries > 0:
         try:
-            tqdm.write(f"{timeoutput()} - Splitting item with ID:{metadataid}")
+            tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Splitting item with ID:{metadataid}")
             url_params = {
                 'X-Plex-Token': config["plex_token"]
             }
@@ -193,16 +243,16 @@ def plex_split(metadataid, config, delay):
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
-                tqdm.write(f"{timeoutput()} - Successfully split {metadataid}.")
+                tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Successfully split {metadataid}.")
             else:
-                tqdm.write(f"{timeoutput()} - Failed to split {metadataid} - Plex returned error: {resp.text}")
+                tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Failed to split {metadataid} - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            tqdm.write(f"{timeoutput()} - Exception splitting {metadataid} - {retries} left.")
+            tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Exception splitting {metadataid} - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
-        raise Exception(f"{timeoutput()} - Exception splitting {metadataid} - Ran out of retries.")
+        raise Exception(f"{timeoutput()} - Checking for duplicate in Plex: Exception splitting {metadataid} - Ran out of retries.")
 
 
 def load_emby_data(config, emby_sections, embylibrary):
