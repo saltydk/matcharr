@@ -264,7 +264,7 @@ def load_emby_data(config, emby_sections, embylibrary):
                                 EmbyDB().data(config, section)]
 
 
-def emby_compare_media(arrconfig, arr, library, agent, config, delay):
+def emby_compare_media(arrconfig, arr, library, agent, config):
     for arrinstance in arrconfig.keys():
         if arrconfig[arrinstance]["emby_library_id"] == "None":
             continue
@@ -287,15 +287,13 @@ def emby_compare_media(arrconfig, arr, library, agent, config, delay):
                                            emby_items.metadataid,
                                            items.title,
                                            agent,
-                                           items.id,
-                                           delay)
+                                           items.id)
 
-                                time.sleep(delay)
                             except TypeError:
                                 tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
 
 
-def emby_match(url, token, metadataid, title, agent, agentid, delay):
+def emby_match(url, token, metadataid, title, agent, agentid):
     retries = 5
     while retries > 0:
         try:
@@ -321,7 +319,6 @@ def emby_match(url, token, metadataid, title, agent, agentid, delay):
             tqdm.write(
                 f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
             retries -= 1
-            time.sleep(delay)
     if retries == 0:
         raise Exception(
             f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")

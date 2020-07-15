@@ -102,8 +102,8 @@ if plex_enabled:
     print(f"{timeoutput()} - Number of fixed matches in Plex: {fixed_matches}")
 
 if emby_enabled:
-    emby_compare_media(radarrs_config, radarr, embylibrary, "Tmdb", config, delay)
-    emby_compare_media(sonarrs_config, sonarr, embylibrary, "Tvdb", config, delay)
+    emby_compare_media(radarrs_config, radarr, embylibrary, "Tmdb", config)
+    emby_compare_media(sonarrs_config, sonarr, embylibrary, "Tvdb", config)
 
 print(f"{timeoutput()} - Running the program took {runtime.stop()} seconds.")
 
