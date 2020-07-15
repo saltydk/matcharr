@@ -51,10 +51,10 @@ def parse_arr_data(media, sonarr, radarr):
 def get_arrpaths(paths):
     arrpaths = {}
     for arrtype in paths.keys():
-        arrpaths[arrtype] = {}
+        arrpaths[arrtype] = dict()
         for arr, data in paths[arrtype].items():
             x = 0
-            arrpaths[arrtype][arr] = {}
+            arrpaths[arrtype][arr] = dict()
             for path in data:
                 arrpaths[arrtype][arr][x] = path.get('path')
                 x += 1
@@ -63,13 +63,13 @@ def get_arrpaths(paths):
 
 def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections):
     for arrtype in arrpaths.keys():
-        arr_plex_match[arrtype] = {}
+        arr_plex_match[arrtype] = dict()
         if arrtype == "sonarr":
             string = "shows"
         if arrtype == "radarr":
             string = "movie"
         for arr in arrpaths[arrtype].keys():
-            arr_plex_match[arrtype][arr] = {}
+            arr_plex_match[arrtype][arr] = dict()
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in plex_library_paths.keys():
                     for plex_path in plex_library_paths[library].values():
