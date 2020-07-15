@@ -245,14 +245,17 @@ def plex_split(metadataid, config, delay):
             if resp.status_code == 200:
                 tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Successfully split {metadataid}.")
             else:
-                tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Failed to split {metadataid} - Plex returned error: {resp.text}")
+                tqdm.write(
+                    f"{timeoutput()} - Checking for duplicate in Plex: Failed to split {metadataid} - Plex returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            tqdm.write(f"{timeoutput()} - Checking for duplicate in Plex: Exception splitting {metadataid} - {retries} left.")
+            tqdm.write(
+                f"{timeoutput()} - Checking for duplicate in Plex: Exception splitting {metadataid} - {retries} left.")
             retries -= 1
             time.sleep(delay)
     if retries == 0:
-        raise Exception(f"{timeoutput()} - Checking for duplicate in Plex: Exception splitting {metadataid} - Ran out of retries.")
+        raise Exception(
+            f"{timeoutput()} - Checking for duplicate in Plex: Exception splitting {metadataid} - Ran out of retries.")
 
 
 def load_emby_data(config, emby_sections, embylibrary):
@@ -289,8 +292,30 @@ def emby_compare_media(arrconfig, arr, library, agent, config):
                                            agent,
                                            items.id)
 
+                                emby_refresh(config["emby_url"],
+                                             config["emby_token"],
+                                             emby_items.metadataid)
+
                             except TypeError:
                                 tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
+                    else:
+                        tqdm.write(f"{timeoutput()} - {arrinstance} title: {items.title} has no match in Emby")
+                        tqdm.write(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
+
+                        try:
+                            emby_match(config["emby_url"],
+                                       config["emby_token"],
+                                       emby_items.metadataid,
+                                       items.title,
+                                       agent,
+                                       items.id)
+
+                            emby_refresh(config["emby_url"],
+                                         config["emby_token"],
+                                         emby_items.metadataid)
+
+                        except TypeError:
+                            tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
 
 
 def emby_match(url, token, metadataid, title, agent, agentid):
@@ -298,15 +323,18 @@ def emby_match(url, token, metadataid, title, agent, agentid):
     while retries > 0:
         try:
             params = (
-                ('ReplaceAllImages', 'true'),
                 ('api_key', token),
             )
-            url_str = '%s/emby/Items/RemoteSearch/Apply/%d?ReplaceAllImages=true' % (url, int(metadataid))
+            url_str = '%s/emby/emby/Items/%d' % (url, int(metadataid))
             headers = {
                 'accept': '*/*',
                 'Content-Type': 'application/json',
             }
-            data = f'{{"ProviderIds":{{"{agent}":"{agentid}"}}}}'
+            if agent == "Tmdb":
+                data = f'{{"Id": metadataid,"Name": title,"Genres": [],"Tags": [],"TagItems": [],"LockData": false,"LockedFields": [],"ProviderIds": {{"{agent}":"{agentid}","Imdb": "","Tvdb": "","Zap2It": ""}}}}'
+            if agent == "Tvdb":
+                data = f'{{"Id": metadataid,"Name": title,"Genres": [],"Tags": [],"TagItems": [],"LockData": false,"LockedFields": [],"ProviderIds": {{"{agent}":"{agentid}","Imdb": "","Tmdb": "","Zap2It": ""}}}}'
+
             resp = requests.post(url_str, headers=headers, params=params, data=data, timeout=300)
 
             if resp.status_code == 200 or resp.status_code == 204:
@@ -322,3 +350,37 @@ def emby_match(url, token, metadataid, title, agent, agentid):
     if retries == 0:
         raise Exception(
             f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
+
+
+def emby_refresh(url, token, metadataid):
+    retries = 5
+    while retries > 0:
+        try:
+            params = (
+                ('Recursive', 'true'),
+                ('MetadataRefreshMode', 'FullRefresh'),
+                ('ImageRefreshMode', 'FullRefresh'),
+                ('ReplaceAllMetadata', 'true'),
+                ('ReplaceAllImages', 'true'),
+                ('api_key', token),
+            )
+            url_str = '%s/emby/Items/%d/Refresh' % (url, int(metadataid))
+            headers = {
+                'accept': '*/*',
+                'Content-Type': 'application/json',
+            }
+            resp = requests.post(url_str, headers=headers, params=params, timeout=300)
+
+            if resp.status_code == 200 or resp.status_code == 204:
+                tqdm.write(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
+            else:
+                tqdm.write(
+                    f"{timeoutput()} - Failed to refresh {int(metadataid)} - Emby returned error: {resp.text}")
+            break
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
+            tqdm.write(
+                f"{timeoutput()} - Exception refreshing {int(metadataid)} - {retries} left.")
+            retries -= 1
+    if retries == 0:
+        raise Exception(
+            f"{timeoutput()} - Exception refreshing {int(metadataid)} - Ran out of retries.")
