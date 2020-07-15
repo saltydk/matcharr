@@ -14,14 +14,15 @@ plex_enabled = config["plex_enabled"]
 plex_sections = {}
 emby_sections = {}
 
-server = PlexServer(config["plex_url"], config["plex_token"])
-server_sections = server.library.sections()
-plex_library_paths = {}
-for section in server_sections:
-    plex_library_paths[section.key] = {}
-    x = 0
-    for location in section.locations:
-        plex_library_paths[section.key][x] = location
+if plex_enabled:
+    server = PlexServer(config["plex_url"], config["plex_token"])
+    server_sections = server.library.sections()
+    plex_library_paths = {}
+    for section in server_sections:
+        plex_library_paths[section.key] = {}
+        x = 0
+        for location in section.locations:
+            plex_library_paths[section.key][x] = location
 
 
 sonarrs_config = {}
@@ -67,11 +68,12 @@ parse_arr_data(media, sonarr, radarr)
 
 arrpaths = get_arrpaths(paths)
 
-arr_plex_match = {}
-arr_plex_match = arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections)
+
 
 if plex_enabled:
     # Load data from Plex.
+    arr_plex_match = {}
+    arr_plex_match = arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections)
     load_plex_data(server, plex_sections, plexlibrary, config)
 
 if emby_enabled:
