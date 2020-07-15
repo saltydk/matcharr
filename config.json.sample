@@ -3,18 +3,21 @@
   "plex_url": "https://plex.domain.tld",
   "plex_enabled": false,
   "emby_token": "",
-  "emby_url":  "https://emby.domain.tld",
+  "emby_url": "https://emby.domain.tld",
   "emby_enabled": false,
   "delay": 10,
+  "path_mappings": {
+      "/mnt/unionfs/Media/": [
+        "/data/"
+      ]
+  },
   "radarr": {
     "radarr": {
-      "plex_library_id": "1",
       "emby_library_id": "None",
       "url": "https://radarr.domain.tld",
       "apikey": ""
     },
     "radarr4k": {
-      "plex_library_id": "11",
       "emby_library_id": "None",
       "url": "https://radarr4k.domain.tld",
       "apikey": ""
@@ -22,13 +25,11 @@
   },
   "sonarr": {
     "sonarr": {
-      "plex_library_id": "2",
       "emby_library_id": "None",
       "url": "https://sonarr.domain.tld",
       "apikey": ""
     },
     "sonarr4k": {
-      "plex_library_id": "12",
       "emby_library_id": "2007",
       "url": "https://sonarr4k.domain.tld",
       "apikey": ""

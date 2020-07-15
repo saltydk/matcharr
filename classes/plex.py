@@ -3,15 +3,14 @@ import os
 
 
 class Plex:
-    def __init__(self, path, mapping, agent, metadataid, title):
+    def __init__(self, path, agent, metadataid, title):
         self.path = path
-        self.mapping = mapping
         self.agent = agent
         self.id = int(re.search(r'\d+', agent).group())
-        if os.path.isfile(str(path[0])):
-            self.fullpath = os.path.dirname(os.path.abspath(str(path[0])))
+        if os.path.isfile(path):
+            self.fullpath = os.path.dirname(os.path.abspath(path))
         else:
-            self.fullpath = str(path[0])
+            self.fullpath = path
         self.metadataid = metadataid
         self.title = title
 
