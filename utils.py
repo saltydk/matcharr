@@ -99,15 +99,26 @@ def load_plex_data(server, plex_sections, plexlibrary, config):
                                       media]
 
 
-def check_faulty(config, arr, arrtype):
-    for database in giefbar([*config], f'{timeoutput()} - Checking for faulty data in {arrtype}'):
+def check_faulty(radarrs_config, sonarrs_config, radarr, sonarr):
+    if bool(radarrs_config.keys()):
+        for radarr_db in giefbar(radarrs_config.keys(), f'{timeoutput()} - Checking for faulty data in Radarr'):
 
-        database_panda = pd.DataFrame.from_records([item.to_dict() for item in arr[database]])
-        database_paths = database_panda["path"]
-        database_duplicate = database_panda[database_paths.isin(database_paths[database_paths.duplicated()])]
+            database_panda = pd.DataFrame.from_records([item.to_dict() for item in radarr[radarr_db]])
+            database_paths = database_panda["path"]
+            database_duplicate = database_panda[database_paths.isin(database_paths[database_paths.duplicated()])]
 
-        for path in database_duplicate.values.tolist():
-            print(f"{timeoutput()} - Duplicate path in item: {path}")
+            for path in database_duplicate.values.tolist():
+                print(f"{timeoutput()} - Checking for faulty data in Radarr - Duplicate path in item: {path}")
+
+    if bool(sonarrs_config.keys()):
+        for sonarr_db in giefbar(sonarrs_config.keys(), f'{timeoutput()} - Checking for faulty data in Sonarr'):
+
+            database_panda = pd.DataFrame.from_records([item.to_dict() for item in sonarr[sonarr_db]])
+            database_paths = database_panda["path"]
+            database_duplicate = database_panda[database_paths.isin(database_paths[database_paths.duplicated()])]
+
+            for path in database_duplicate.values.tolist():
+                print(f"{timeoutput()} - Checking for faulty data in Sonarr - Duplicate path in item: {path}")
 
 
 def check_duplicate(server, plex_sections, config, delay):
