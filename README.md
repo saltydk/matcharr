@@ -10,7 +10,7 @@ If you deviate from the structure you should assume that this script will not wo
 Names of the files/folders are not important as long as they are unique since we use the data in 
 the various sonarr/radarr instances to figure out which is which and not relying on Plex to guess.
 
-#### Emby notice
+### Emby notice
 Matcharr will queue the refresh requests in Emby after editing the metadata which means that if 
 you have significant amount of rematches (especially TV shows) it is recommended to not 
 restart Emby until it is done refreshing. On my own system Emby uses 2 seconds per file, so a movie 
