@@ -13,24 +13,20 @@
   },
   "radarr": {
     "radarr": {
-      "emby_library_id": "None",
       "url": "https://radarr.domain.tld",
       "apikey": ""
     },
     "radarr4k": {
-      "emby_library_id": "None",
       "url": "https://radarr4k.domain.tld",
       "apikey": ""
     }
   },
   "sonarr": {
     "sonarr": {
-      "emby_library_id": "None",
       "url": "https://sonarr.domain.tld",
       "apikey": ""
     },
     "sonarr4k": {
-      "emby_library_id": "2007",
       "url": "https://sonarr4k.domain.tld",
       "apikey": ""
     }
