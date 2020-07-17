@@ -1,8 +1,6 @@
 ### Current assumptions / limitations
 * Agents for movies are tmdb (Plex Movie can also use tmdb) and not imdb.
 * Agents for shows are tvdb which means no HAMA or tmdb.
-* Script has to run somewhere with access to the directory used in Sonarr/Radarr/Plex to use 
-some python functionality to strip filename out of paths for movie libraries in Plex.
 * Assumes that you are using a similar directory structure to the ones recommended by Plex. 
 This for [movies](https://support.plex.tv/articles/naming-and-organizing-your-movie-media-files/) 
 and this for [TV Shows](https://support.plex.tv/articles/naming-and-organizing-your-tv-show-files/). 
@@ -33,8 +31,8 @@ You will have to enter your sonarr and radarr instances into the config
   "emby_enabled": false,
   "delay": 10,
   "path_mappings": {
-    "/mnt/unionfs/Media/": [ # Path that the script can see the files.
-      "/data/"               # Any paths used in Plex/Sonarr/Radarr that does not match the above.
+    "/mnt/unionfs/Media/": [ # Path in Plex/Emby
+      "/data/"               # Paths used in Sonarr/Radarr. Must point to the same data.
     ]
   },
   "radarr": {
@@ -59,8 +57,5 @@ You will have to enter your sonarr and radarr instances into the config
   }
 }
 ```
-
-You can add as many sonarr or radarr instances (but with unique names) as you would like but 
-there is no formatting check built into my script so make sure it is valid json. 
 You can grab your Plex token from Plex Autoscan or look 
 [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).

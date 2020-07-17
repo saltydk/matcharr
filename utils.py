@@ -258,7 +258,7 @@ def plex_split(metadataid, config, delay):
 
 def load_emby_data(config, emby_sections, embylibrary):
     for section in giefbar(emby_sections, f'{timeoutput()} - Loading data from Emby'):
-        embylibrary[section] = [Emby(row['Path'],
+        embylibrary[section] = [Emby(map_path(config, row['Path']),
                                      row['ProviderIds'],
                                      row['Id'],
                                      row['Name']) for row in
@@ -316,6 +316,7 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
 
                                     except TypeError:
                                         tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
+                                    counter += 1
                             else:
                                 tqdm.write(f"{timeoutput()} - {arrinstance} title: {items.title} has no match in Emby")
                                 tqdm.write(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
