@@ -16,14 +16,8 @@ plex_sections, emby_sections, sonarrs_config, radarrs_config = dict(), dict(), d
 for x in sonarr_config:
     sonarrs_config[x] = config["sonarr"][x]
 
-    if emby_enabled and config["sonarr"][x]["emby_library_id"] != "None":
-        emby_sections[config["sonarr"][x]["emby_library_id"]] = "shows"
-
 for x in radarr_config:
     radarrs_config[x] = config["radarr"][x]
-
-    if emby_enabled and config["radarr"][x]["emby_library_id"] != "None":
-        emby_sections[config["radarr"][x]["emby_library_id"]] = "movie"
 
 if not bool(radarrs_config.keys()) and not bool(sonarrs_config.keys()):
     print(f'{timeoutput()} - No Arrs configured - Exiting.')
@@ -54,8 +48,10 @@ if bool(radarrs_config.keys()):
 sonarr, radarr, plexlibrary, embylibrary = dict(), dict(), dict(), dict()
 
 parse_arr_data(media, sonarr, radarr)
-
 arrpaths = get_arrpaths(paths)
+
+# Check for duplicate entries in Arr instances.
+check_faulty(radarrs_config, sonarrs_config, radarr, sonarr)
 
 if plex_enabled:
     # Load data from Plex.
@@ -70,19 +66,11 @@ if plex_enabled:
         for location in section.locations:
             plex_library_paths[section.key][x] = location
 
-    arr_plex_match = arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections)
+    arr_plex_match = dict()
+    arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections)
 
     load_plex_data(server, plex_sections, plexlibrary, config)
 
-if emby_enabled:
-    # Load data from Emby.
-    load_emby_data(config, emby_sections, embylibrary)
-
-# Check for duplicate entries in Arr instances.
-check_faulty(radarrs_config, sonarrs_config, radarr, sonarr)
-
-
-if plex_enabled:
     # Check for duplicate entries in Plex.
     duplicate = check_duplicate(server, plex_sections, config, delay)
 
@@ -96,14 +84,23 @@ if plex_enabled:
         load_plex_data(server, plex_sections, plexlibrary, config)
 
     # Check for mismatched entries and correct them.
-    fixed_matches = 0
-    fixed_matches += plex_compare_media(arr_plex_match, sonarr, radarr, plexlibrary, config, delay)
-    print(f"{timeoutput()} - Number of fixed matches in Plex: {fixed_matches}")
+    plex_fixed_matches = 0
+    plex_fixed_matches += plex_compare_media(arr_plex_match, sonarr, radarr, plexlibrary, config, delay)
+    print(f"{timeoutput()} - Number of fixed matches in Plex: {plex_fixed_matches}")
 
 if emby_enabled:
+    # Load data from Emby.
+    emby_library_paths = EmbyDB.libraries(config)
+    emby_sections = EmbyDB.sections(config)
+    load_emby_data(config, emby_sections, embylibrary)
+
+    arr_emby_match = dict()
+    arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths)
+
     # Check for mismatched entries and correct them.
-    emby_compare_media(radarrs_config, radarr, embylibrary, "Tmdb", config)
-    emby_compare_media(sonarrs_config, sonarr, embylibrary, "Tvdb", config)
+    emby_fixed_matches = 0
+    emby_fixed_matches += emby_compare_media(arr_emby_match, sonarr, radarr, embylibrary, config)
+    print(f"{timeoutput()} - Number of fixed matches in Emby: {emby_fixed_matches}")
 
 print(f"{timeoutput()} - Running the program took {runtime.stop()} seconds.")
 

@@ -31,24 +31,20 @@ You will have to enter your sonarr and radarr instances into the config
   },
   "radarr": {
     "radarr": {
-      "emby_library_id": "None",
       "url": "https://radarr.domain.tld",
       "apikey": ""
     },
     "radarr4k": {
-      "emby_library_id": "None",
       "url": "https://radarr4k.domain.tld",
       "apikey": ""
     }
   },
   "sonarr": {
     "sonarr": {
-      "emby_library_id": "None",
       "url": "https://sonarr.domain.tld",
       "apikey": ""
     },
     "sonarr4k": {
-      "emby_library_id": "2007",
       "url": "https://sonarr4k.domain.tld",
       "apikey": ""
     }
@@ -60,10 +56,3 @@ You can add as many sonarr or radarr instances (but with unique names) as you wo
 there is no formatting check built into my script so make sure it is valid json. 
 You can grab your Plex token from Plex Autoscan or look 
 [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
-
-### Emby Section IDs
-Run the following command with your own url and apikey to get the library information you need:
-
-```
-curl -X GET "https://emby.domain.tld/emby/Library/SelectableMediaFolders?api_key=<insert apikey>" -H "accept: application/json"
-```
