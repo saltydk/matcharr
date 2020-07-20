@@ -67,7 +67,7 @@ if plex_enabled:
             plex_library_paths[section.key][x] = location
 
     arr_plex_match = dict()
-    arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections)
+    arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config)
 
     load_plex_data(server, plex_sections, plexlibrary, config)
 
@@ -95,7 +95,7 @@ if emby_enabled:
     load_emby_data(config, emby_sections, embylibrary)
 
     arr_emby_match = dict()
-    arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths)
+    arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config)
 
     # Check for mismatched entries and correct them.
     emby_fixed_matches = 0

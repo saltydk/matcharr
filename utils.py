@@ -25,10 +25,9 @@ def giefbar(iterator, desc):
 
 # Audaciously stolen from https://github.com/l3uddz/plex_autoscan/
 def map_path(config, path):
-    for mapped_path, mappings in config['path_mappings'].items():
-        for mapping in mappings:
-            if path.startswith(mapping):
-                return path.replace(mapping, mapped_path)
+    for mapped_path, mapping in config['path_mappings'].items():
+        if path.startswith(mapping):
+            return path.replace(mapping, mapped_path)
     return path
 
 
@@ -61,7 +60,7 @@ def get_arrpaths(paths):
     return arrpaths
 
 
-def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections):
+def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config):
     for arrtype in arrpaths.keys():
         arr_plex_match[arrtype] = dict()
         for arr in arrpaths[arrtype].keys():
@@ -69,7 +68,7 @@ def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in plex_library_paths.keys():
                     for plex_path in plex_library_paths[library].values():
-                        if arr_path == os.path.join(plex_path, ''):
+                        if arr_path == map_path(config, os.path.join(plex_path, '')):
                             arr_plex_match[arrtype][arr][arr_path] = {"plex_library_id": library}
                             plex_sections[library] = library
 
@@ -79,7 +78,7 @@ def load_plex_data(server, plex_sections, plexlibrary, config):
         section = server.library.sectionByID(str(sectionid))
         media = section.all()
 
-        plexlibrary[sectionid] = [Plex(map_path(config, str(row.locations[0])),
+        plexlibrary[sectionid] = [Plex(str(row.locations[0]),
                                        row.guid,
                                        row.ratingKey,
                                        row.title) for row in
@@ -144,7 +143,7 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
             for folder in arr_plex_match[arrtype][arrinstance].values():
                 for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking Plex against {arrinstance}'):
                     for plex_items in library[folder.get("plex_library_id")]:
-                        if items.path == plex_items.fullpath:
+                        if items.path == map_path(config, plex_items.fullpath):
                             if items.id == plex_items.id:
                                 break
                             else:
@@ -265,14 +264,14 @@ def load_emby_data(config, emby_sections, embylibrary):
                                 EmbyDB().data(config, section)]
 
 
-def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths):
+def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config):
     for arrtype in arrpaths.keys():
         arr_emby_match[arrtype] = dict()
         for arr in arrpaths[arrtype].keys():
             arr_emby_match[arrtype][arr] = dict()
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in emby_library_paths.values():
-                    if arr_path == os.path.join(library.get('Path'), ''):
+                    if arr_path == map_path(config, os.path.join(library.get('Path'), '')):
                         arr_emby_match[arrtype][arr][arr_path] = {"emby_library_id": library.get('Id')}
 
 

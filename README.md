@@ -5,7 +5,7 @@
 This for [movies](https://support.plex.tv/articles/naming-and-organizing-your-movie-media-files/) 
 and this for [TV Shows](https://support.plex.tv/articles/naming-and-organizing-your-tv-show-files/). 
 If you deviate from the structure you should assume that this script will not work for your setup. 
-Names of the files/folders are not important as long as they are unique since we use the data in 
+Names of the files/folders are not important as long as they are unique since we use the folder data in 
 the various sonarr/radarr instances to figure out which is which and not relying on Plex to guess.
 
 ### Emby notice
@@ -31,9 +31,8 @@ You will have to enter your sonarr and radarr instances into the config
   "emby_enabled": false,
   "delay": 10,
   "path_mappings": {
-    "/mnt/unionfs/Media/": [ # Path in Plex/Emby
-      "/data/"               # Paths used in Sonarr/Radarr. Must point to the same data.
-    ]
+      "/mnt/unionfs/Media/": "/data/",
+      "/data/Movies/": "/movies/"
   },
   "radarr": {
     "radarr": {
