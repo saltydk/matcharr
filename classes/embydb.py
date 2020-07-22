@@ -45,6 +45,6 @@ class EmbyDB:
         emby_sections = dict()
         for library in result:
             for subfolder in library.get('SubFolders'):
-                emby_sections[subfolder.get('Id')] = subfolder.get('Name')
+                emby_sections[subfolder.get('Id')] = library.get('Name')
 
         return emby_sections

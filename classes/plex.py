@@ -4,9 +4,18 @@ import os
 
 class Plex:
     def __init__(self, path, agent, metadataid, title):
-        self.path = path
-        self.agent = agent
-        self.id = int(re.search(r'\d+', agent).group())
+        if agent.startswith("com.plexapp.agents.themoviedb"):
+            self.agent = "themoviedb"
+            self.id = int(re.search(r'\d+', agent).group())
+
+        if agent.startswith("com.plexapp.agents.thetvdb"):
+            self.agent = "thetvdb"
+            self.id = int(re.search(r'\d+', agent).group())
+
+        if agent.startswith("com.plexapp.agents.imdb"):
+            self.agent = "imdb"
+            self.id = re.search(r'(tt[0-9]{7,})', agent).group()
+
         if os.path.isfile(path):
             self.fullpath = os.path.dirname(os.path.abspath(path))
         else:

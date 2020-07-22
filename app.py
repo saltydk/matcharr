@@ -2,8 +2,18 @@ from plexapi.server import PlexServer
 from classes.timer import *
 from classes.arr import *
 from utils import *
+import pkg_resources as pkg
+
+# TODO add logging
+#  add validation for Arr/Plex/Emby config entries
+#  add check for empty libraries in Plex/Emby
+#  add support for anime (tentative)
+#  add support for multiple Plex/Emby instances (tentative)
 
 runtime = Timer()
+print(f"{timeoutput()} - Using PlexAPI version: {pkg.get_distribution('plexapi').version}")
+if pkg.parse_version(pkg.get_distribution("plexapi").version) > pkg.parse_version("3.6.0"):
+    print(f"{timeoutput()} - Versions from 4.0.0 run up to 4x slower. Please revert to 3.6.0")
 
 config = json.load(open("config.json"))
 sonarr_config = config["sonarr"].keys()
@@ -69,7 +79,7 @@ if plex_enabled:
     arr_plex_match = dict()
     arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config)
 
-    load_plex_data(server, plex_sections, plexlibrary, config)
+    load_plex_data(server, plex_sections, plexlibrary)
 
     # Check for duplicate entries in Plex.
     duplicate = check_duplicate(server, plex_sections, config, delay)
@@ -81,7 +91,7 @@ if plex_enabled:
         plexlibrary = dict()
         server.reload()
 
-        load_plex_data(server, plex_sections, plexlibrary, config)
+        load_plex_data(server, plex_sections, plexlibrary)
 
     # Check for mismatched entries and correct them.
     plex_fixed_matches = 0
