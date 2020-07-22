@@ -30,8 +30,8 @@ Template looks like this:
   "emby_enabled": false,
   "delay": 10,
   "path_mappings": {
-      "/mnt/unionfs/Media/": "/data/",
-      "/data/Movies/": "/movies/"
+    "/mnt/unionfs/Media/": "/data/",
+    "/data/Movies/": "/movies/"
   },
   "radarr": {
     "radarr": {
@@ -73,8 +73,8 @@ For Plex you can get your token from Plex Autoscan or look [here](https://suppor
 #### Path Mapping Section
 ```
 "path_mappings": {
-	"/mnt/unionfs/Media/": "/data/",
-	"/data/Movies/": "/movies/"
+  "/mnt/unionfs/Media/": "/data/",
+  "/data/Movies/": "/movies/"
 },
 ```
 You can add as many mapping entries as you'd like as long as the values on the right are unique. Script, using the above example, checks if the path in Plex/Emby starts with /data/ or /movies/ and replaces it with the corresponding value set in the config. So enter the path that is used in your Sonarr/Radarr instance and then the corresponding path in Plex/Emby. If you have no need for path mapping you can just leave it as is.
