@@ -7,8 +7,8 @@
   "emby_enabled": false,
   "delay": 10,
   "path_mappings": {
-      "/mnt/unionfs/Media/": "/data/",
-      "/data/Movies/": "/movies/"
+    "/mnt/unionfs/Media/": "/data/",
+    "/data/Movies/": "/movies/"
   },
   "radarr": {
     "radarr": {
