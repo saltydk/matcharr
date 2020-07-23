@@ -1,4 +1,4 @@
 requests~=2.24.0
 pandas~=1.0.5
 tqdm~=4.48.0
-PlexAPI~=3.6.0
+PlexAPI~=4.0.0

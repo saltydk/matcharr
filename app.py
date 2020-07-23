@@ -1,8 +1,10 @@
 from plexapi.server import PlexServer
 from classes.timer import *
 from classes.arr import *
-from utils import *
-import pkg_resources as pkg
+from utils.emby import *
+from utils.plex import *
+from utils.arr import *
+
 
 # TODO add logging
 #  add validation for Arr/Plex/Emby config entries
@@ -11,9 +13,6 @@ import pkg_resources as pkg
 #  add support for multiple Plex/Emby instances (tentative)
 
 runtime = Timer()
-print(f"{timeoutput()} - Using PlexAPI version: {pkg.get_distribution('plexapi').version}")
-if pkg.parse_version(pkg.get_distribution("plexapi").version) > pkg.parse_version("3.6.0"):
-    print(f"{timeoutput()} - Versions from 4.0.0 run up to 4x slower. Please revert to 3.6.0")
 
 config = json.load(open("config.json"))
 sonarr_config = config["sonarr"].keys()
