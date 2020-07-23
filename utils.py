@@ -209,7 +209,6 @@ def plex_match(url, token, agent, metadataid, agentid, title, delay):
                 'name': title,
             }
             url_str = '%s/library/metadata/%d/match' % (url, int(metadataid))
-            requests.options(url_str, params=url_params, timeout=30)
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
@@ -236,7 +235,6 @@ def plex_refresh(url, token, metadataid, delay):
                 'X-Plex-Token': token
             }
             url_str = '%s/library/metadata/%d/refresh' % (url, int(metadataid))
-            requests.options(url_str, params=url_params, timeout=30)
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:
@@ -261,7 +259,6 @@ def plex_split(metadataid, config, delay):
                 'X-Plex-Token': config["plex_token"]
             }
             url_str = '%s/library/metadata/%d/split' % (config["plex_url"], metadataid)
-            requests.options(url_str, params=url_params, timeout=30)
             resp = requests.put(url_str, params=url_params, timeout=30)
 
             if resp.status_code == 200:

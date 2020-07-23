@@ -8,6 +8,10 @@ If you deviate from the structure you should assume that this script will not wo
 Names of the files/folders are not important as long as they are unique since we use the folder data in 
 the various sonarr/radarr instances to figure out which is which and not relying on Plex to guess.
 
+### Plex warning
+The new movie agent introduced in 1.20.0.3125 changes how information about the match is stored and 
+will not work with matcharr.
+
 ### Emby notice
 Matcharr will queue the refresh requests in Emby after editing the metadata which means that if 
 you have significant amount of rematches (especially TV shows) it is recommended to not 
