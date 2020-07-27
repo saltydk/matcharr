@@ -11,6 +11,8 @@ from utils.arr import *
 #  add check for empty libraries in Plex/Emby
 #  add support for anime (tentative)
 #  add support for multiple Plex/Emby instances (tentative)
+#  add support for forcing an agent for library types
+#  add dry-run option
 
 runtime = Timer()
 

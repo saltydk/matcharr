@@ -4,6 +4,8 @@ import os
 
 class Plex:
     def __init__(self, path, agent, metadataid, title):
+        self.agent = "unknown"
+
         if agent.startswith("com.plexapp.agents.themoviedb"):
             self.agent = "themoviedb"
             self.id = int(re.search(r'\d+', agent).group())
