@@ -1,6 +1,6 @@
 import requests
 import requests.exceptions
-import os
+import posixpath
 
 from classes.emby import Emby
 from classes.embydb import EmbyDB
@@ -9,9 +9,9 @@ from utils.base import *
 
 def load_emby_data(config, emby_sections, embylibrary):
     for section in giefbar(emby_sections, f'{timeoutput()} - Loading data from Emby'):
+        embylibrary[section] = list()
         for row in giefbar(EmbyDB().data(config, section),
                            f'{timeoutput()} - Loading Emby section {emby_sections[section]} (ID {section})'):
-            embylibrary[section] = list()
             embylibrary[section].append(Emby(row['Path'], row['ProviderIds'], row['Id'], row['Name']))
 
 
@@ -22,7 +22,7 @@ def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config):
             arr_emby_match[arrtype][arr] = dict()
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in emby_library_paths.values():
-                    if arr_path == map_path(config, os.path.join(library.get('Path'), '')):
+                    if arr_path == map_path(config, posixpath.join(library.get('Path'), '')):
                         arr_emby_match[arrtype][arr][arr_path] = {"emby_library_id": library.get('Id')}
 
 
@@ -86,6 +86,7 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
                                 except TypeError:
                                     tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
                                 counter += 1
+                            break
     return counter
 
 

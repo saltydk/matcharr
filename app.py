@@ -13,6 +13,7 @@ from utils.arr import *
 #  add support for multiple Plex/Emby instances (tentative)
 #  add support for forcing an agent for library types
 #  add dry-run option
+#  add support for specifying path mapping for media server
 
 runtime = Timer()
 

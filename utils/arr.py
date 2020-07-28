@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 
 from classes.arrmedia import ArrMedia
@@ -34,19 +33,6 @@ def get_arrpaths(paths):
                 arrpaths[arrtype][arr][x] = path.get('path')
                 x += 1
     return arrpaths
-
-
-def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config):
-    for arrtype in arrpaths.keys():
-        arr_plex_match[arrtype] = dict()
-        for arr in arrpaths[arrtype].keys():
-            arr_plex_match[arrtype][arr] = dict()
-            for arr_path in arrpaths[arrtype][arr].values():
-                for library in plex_library_paths.keys():
-                    for plex_path in plex_library_paths[library].values():
-                        if arr_path == map_path(config, os.path.join(plex_path, '')):
-                            arr_plex_match[arrtype][arr][arr_path] = {"plex_library_id": library}
-                            plex_sections[library] = library
 
 
 def check_faulty(radarrs_config, sonarrs_config, radarr, sonarr):

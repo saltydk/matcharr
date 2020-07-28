@@ -1,8 +1,10 @@
 import time
 import requests
 import requests.exceptions
+import posixpath
 
 from plexapi.video import Show
+from plexapi.video import Movie
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 from classes.plex import Plex
@@ -13,11 +15,11 @@ def load_plex_data(server, plex_sections, plexlibrary):
     for sectionid in giefbar(plex_sections.values(), f'{timeoutput()} - Loading data from Plex'):
         section = server.library.sectionByID(sectionid)
         Show._include = ""
+        Movie._include = ""
         media = section.all()
-        items = list()
+        plexlibrary[sectionid] = list()
         for row in giefbar(media, f'{timeoutput()} - Loading Plex section {section.title} (ID {sectionid})'):
-            items.append(Plex(row.locations[0], row.guid, row.ratingKey, row.title))
-        plexlibrary[sectionid] = items
+            plexlibrary[sectionid].append(Plex(row.locations[0], row.guid, row.ratingKey, row.title))
 
 
 def check_duplicate(server, plex_sections, config, delay):
@@ -39,6 +41,19 @@ def check_duplicate(server, plex_sections, config, delay):
                     time.sleep(delay)
 
     return duplicate
+
+
+def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config):
+    for arrtype in arrpaths.keys():
+        arr_plex_match[arrtype] = dict()
+        for arr in arrpaths[arrtype].keys():
+            arr_plex_match[arrtype][arr] = dict()
+            for arr_path in arrpaths[arrtype][arr].values():
+                for library in plex_library_paths.keys():
+                    for plex_path in plex_library_paths[library].values():
+                        if arr_path == map_path(config, posixpath.join(plex_path, '')):
+                            arr_plex_match[arrtype][arr][arr_path] = {"plex_library_id": library}
+                            plex_sections[library] = library
 
 
 def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):

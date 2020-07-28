@@ -1,5 +1,5 @@
 import re
-import os
+import posixpath
 
 
 class Plex:
@@ -19,8 +19,8 @@ class Plex:
             self.agent = "imdb"
             self.id = re.search(r'(tt[0-9]{7,})', agent).group()
 
-        if os.path.isfile(path):
-            self.fullpath = os.path.dirname(os.path.abspath(path))
+        if posixpath.isfile(path):
+            self.fullpath = posixpath.dirname(posixpath.abspath(path))
         else:
             self.fullpath = path
         self.metadataid = metadataid
