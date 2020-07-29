@@ -1,10 +1,19 @@
-from plexapi.server import PlexServer
-from classes.timer import *
-from classes.arr import *
-from utils.emby import *
-from utils.plex import *
-from utils.arr import *
+"""
+Matcharr compares data from Sonarr/Radarr instances to
+libraries in Plex/Emby and fixes any mismatches created by the agents used.
+"""
 
+import json
+import time
+import sys
+
+from plexapi.server import PlexServer
+from classes.arr import Arr
+from classes.embydb import EmbyDB
+from utils.emby import load_emby_data, arr_find_emby_id, emby_compare_media
+from utils.plex import load_plex_data, check_duplicate, arr_find_plex_id, plex_compare_media
+from utils.arr import parse_arr_data, get_arrpaths, check_faulty
+from utils.base import timeoutput, giefbar
 
 # TODO add logging
 #  add validation for Arr/Plex/Emby config entries
@@ -15,7 +24,7 @@ from utils.arr import *
 #  add dry-run option
 #  add support for specifying path mapping for media server
 
-runtime = Timer()
+runtime = time.time()
 
 config = json.load(open("config.json"))
 sonarr_config = config["sonarr"].keys()
@@ -25,45 +34,47 @@ emby_enabled = config["emby_enabled"]
 plex_enabled = config["plex_enabled"]
 plex_sections, emby_sections, sonarrs_config, radarrs_config = dict(), dict(), dict(), dict()
 
-for x in sonarr_config:
-    sonarrs_config[x] = config["sonarr"][x]
+for sonarr in sonarr_config:
+    sonarrs_config[sonarr] = config["sonarr"][sonarr]
 
-for x in radarr_config:
-    radarrs_config[x] = config["radarr"][x]
+for radarr in radarr_config:
+    radarrs_config[radarr] = config["radarr"][radarr]
 
 if not bool(radarrs_config.keys()) and not bool(sonarrs_config.keys()):
     print(f'{timeoutput()} - No Arrs configured - Exiting.')
-    exit(0)
+    sys.exit(0)
 
 # Load data from Arr instances.
 media = {"sonarr": {}, "radarr": {}}
 paths = {"sonarr": {}, "radarr": {}}
 
 if bool(sonarrs_config.keys()):
-    for x in giefbar(sonarrs_config.keys(), f'{timeoutput()} - Loading data from Sonarr instances'):
-        media["sonarr"][x] = Arr(sonarrs_config[x]["url"],
-                                 sonarrs_config[x]["apikey"],
-                                 "series").data
-        paths["sonarr"][x] = Arr(sonarrs_config[x]["url"],
-                                 sonarrs_config[x]["apikey"],
-                                 "series").paths
+    for sonarr in giefbar(sonarrs_config.keys(),
+                          f'{timeoutput()} - Loading data from Sonarr instances'):
+        media["sonarr"][sonarr] = Arr(sonarrs_config[sonarr]["url"],
+                                      sonarrs_config[sonarr]["apikey"],
+                                      "series").data
+        paths["sonarr"][sonarr] = Arr(sonarrs_config[sonarr]["url"],
+                                      sonarrs_config[sonarr]["apikey"],
+                                      "series").paths
 
 if bool(radarrs_config.keys()):
-    for x in giefbar(radarrs_config.keys(), f'{timeoutput()} - Loading data from Radarr instances'):
-        media["radarr"][x] = Arr(radarrs_config[x]["url"],
-                                 radarrs_config[x]["apikey"],
-                                 "movie").data
-        paths["radarr"][x] = Arr(radarrs_config[x]["url"],
-                                 radarrs_config[x]["apikey"],
-                                 "movie").paths
+    for radarr in giefbar(radarrs_config.keys(),
+                          f'{timeoutput()} - Loading data from Radarr instances'):
+        media["radarr"][radarr] = Arr(radarrs_config[radarr]["url"],
+                                      radarrs_config[radarr]["apikey"],
+                                      "movie").data
+        paths["radarr"][radarr] = Arr(radarrs_config[radarr]["url"],
+                                      radarrs_config[radarr]["apikey"],
+                                      "movie").paths
 
-sonarr, radarr, plexlibrary, embylibrary = dict(), dict(), dict(), dict()
+sonarr_items, radarr_items, plexlibrary, embylibrary = dict(), dict(), dict(), dict()
 
-parse_arr_data(media, sonarr, radarr)
+parse_arr_data(media, sonarr_items, radarr_items)
 arrpaths = get_arrpaths(paths)
 
 # Check for duplicate entries in Arr instances.
-check_faulty(radarrs_config, sonarrs_config, radarr, sonarr)
+check_faulty(radarrs_config, sonarrs_config, radarr_items, sonarr_items)
 
 if plex_enabled:
     # Load data from Plex.
@@ -74,9 +85,10 @@ if plex_enabled:
 
     for section in server_sections:
         plex_library_paths[section.key] = dict()
-        x = 0
+        SECTION_COUNT = 0
         for location in section.locations:
-            plex_library_paths[section.key][x] = location
+            plex_library_paths[section.key][SECTION_COUNT] = location
+            SECTION_COUNT += 1
 
     arr_plex_match = dict()
     arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config)
@@ -84,11 +96,11 @@ if plex_enabled:
     load_plex_data(server, plex_sections, plexlibrary)
 
     # Check for duplicate entries in Plex.
-    duplicate = check_duplicate(server, plex_sections, config, delay)
+    DUPLICATE = check_duplicate(server, plex_sections, config, delay)
 
     # Reload Plex data if duplicate items were found in Plex.
-    if duplicate > 0:
-        print(f"{timeoutput()} - Reloading data due to {duplicate} duplicate item(s) in Plex")
+    if DUPLICATE > 0:
+        print(f"{timeoutput()} - Reloading data due to {DUPLICATE} duplicate item(s) in Plex")
 
         plexlibrary = dict()
         server.reload()
@@ -96,9 +108,14 @@ if plex_enabled:
         load_plex_data(server, plex_sections, plexlibrary)
 
     # Check for mismatched entries and correct them.
-    plex_fixed_matches = 0
-    plex_fixed_matches += plex_compare_media(arr_plex_match, sonarr, radarr, plexlibrary, config, delay)
-    print(f"{timeoutput()} - Number of fixed matches in Plex: {plex_fixed_matches}")
+    PLEX_FIXED_MATCHES = 0
+    PLEX_FIXED_MATCHES += plex_compare_media(arr_plex_match,
+                                             sonarr_items,
+                                             radarr_items,
+                                             plexlibrary,
+                                             config,
+                                             delay)
+    print(f"{timeoutput()} - Number of fixed matches in Plex: {PLEX_FIXED_MATCHES}")
 
 if emby_enabled:
     # Load data from Emby.
@@ -110,10 +127,14 @@ if emby_enabled:
     arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config)
 
     # Check for mismatched entries and correct them.
-    emby_fixed_matches = 0
-    emby_fixed_matches += emby_compare_media(arr_emby_match, sonarr, radarr, embylibrary, config)
-    print(f"{timeoutput()} - Number of fixed matches in Emby: {emby_fixed_matches}")
+    EMBY_FIXED_MATCHES = 0
+    EMBY_FIXED_MATCHES += emby_compare_media(arr_emby_match,
+                                             sonarr_items,
+                                             radarr_items,
+                                             embylibrary,
+                                             config)
+    print(f"{timeoutput()} - Number of fixed matches in Emby: {EMBY_FIXED_MATCHES}")
 
-print(f"{timeoutput()} - Running the program took {runtime.stop()} seconds.")
+print(f"{timeoutput()} - Running the program took {round(time.time() - runtime, 2)} seconds.")
 
-exit(0)
+sys.exit(0)

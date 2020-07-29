@@ -1,7 +1,7 @@
 import pandas as pd
 
 from classes.arrmedia import ArrMedia
-from utils.base import *
+from utils.base import timeoutput, giefbar
 
 
 def parse_arr_data(media, sonarr, radarr):

@@ -1,14 +1,15 @@
+import posixpath
 import time
 import requests
 import requests.exceptions
-import posixpath
+
 
 from plexapi.video import Show
 from plexapi.video import Movie
 from plexapi.library import MovieSection
 from plexapi.library import ShowSection
 from classes.plex import Plex
-from utils.base import *
+from utils.base import timeoutput, giefbar, map_path, tqdm
 
 
 def load_plex_data(server, plex_sections, plexlibrary):
@@ -28,16 +29,16 @@ def check_duplicate(server, plex_sections, config, delay):
     for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Checking for duplicate in Plex'):
         section = server.library.sectionByID(str(sectionid))
         if isinstance(section, MovieSection):
-            for x in section.search(libtype="movie", duplicate=True):
+            for duplicate_movie in section.search(libtype="movie", duplicate=True):
                 duplicate += 1
-                plex_split(x.ratingKey, config, delay)
+                plex_split(duplicate_movie.ratingKey, config, delay)
                 time.sleep(delay)
 
-        if isinstance(section, ShowSection):
-            for x in section.search(libtype="show", duplicate=True):
-                if len(x.locations) > 1:
+        elif isinstance(section, ShowSection):
+            for duplicate_show in section.search(libtype="show", duplicate=True):
+                if len(duplicate_show.locations) > 1:
                     duplicate += 1
-                    plex_split(x.ratingKey, config, delay)
+                    plex_split(duplicate_show.ratingKey, config, delay)
                     time.sleep(delay)
 
     return duplicate
@@ -62,7 +63,7 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
         if arrtype == "sonarr":
             agent = "thetvdb"
             arr = sonarr
-        if arrtype == "radarr":
+        elif arrtype == "radarr":
             agent = "themoviedb"
             arr = radarr
         for arrinstance in arr_plex_match[arrtype].keys():

@@ -1,5 +1,5 @@
-import re
 import posixpath
+import re
 
 
 class Plex:
@@ -11,11 +11,11 @@ class Plex:
             self.agent = "themoviedb"
             self.id = int(re.search(r'\d+', agent).group())
 
-        if agent.startswith("com.plexapp.agents.thetvdb"):
+        elif agent.startswith("com.plexapp.agents.thetvdb"):
             self.agent = "thetvdb"
             self.id = int(re.search(r'\d+', agent).group())
 
-        if agent.startswith("com.plexapp.agents.imdb"):
+        elif agent.startswith("com.plexapp.agents.imdb"):
             self.agent = "imdb"
             self.id = re.search(r'(tt[0-9]{7,})', agent).group()
 

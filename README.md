@@ -1,3 +1,6 @@
+### Matcharr
+Matcharr compares data from Sonarr/Radarr instances to libraries in Plex/Emby and fixes any mismatches created by the agents used.
+
 ### Current assumptions / limitations
 * Agents for movies are tmdb (Plex Movie can also use tmdb) and not imdb.
 * Agents for shows are tvdb which means no HAMA or tmdb.
@@ -9,8 +12,8 @@ Names of the files/folders are not important as long as they are unique since we
 the various sonarr/radarr instances to figure out which is which and not relying on Plex to guess.
 
 ### Plex warning
-The new movie agent introduced in 1.20.0.3125 changes how information about the match is stored and 
-will not work with matcharr.
+The new movie agent introduced in 1.20.0.3125 changes how Plex stores metadata and 
+will not work with matcharr at this time.
 
 ### Emby notice
 Matcharr will queue the refresh requests in Emby after editing the metadata which means that if 

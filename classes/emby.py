@@ -1,10 +1,10 @@
-import os
+import posixpath
 
 
 class Emby:
     def __init__(self, path, agent, metadataid, title):
-        if os.path.isfile(path):
-            self.path = os.path.dirname(os.path.abspath(path))
+        if posixpath.isfile(path):
+            self.path = posixpath.dirname(posixpath.abspath(path))
         else:
             self.path = path
         self.id = agent

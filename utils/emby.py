@@ -1,21 +1,30 @@
+"""
+Functions that handle Emby functionality.
+"""
+import posixpath
 import requests
 import requests.exceptions
-import posixpath
 
 from classes.emby import Emby
 from classes.embydb import EmbyDB
-from utils.base import *
+from utils.base import timeoutput, giefbar, map_path, tqdm
 
 
 def load_emby_data(config, emby_sections, embylibrary):
+    """Loads data from Emby."""
     for section in giefbar(emby_sections, f'{timeoutput()} - Loading data from Emby'):
         embylibrary[section] = list()
         for row in giefbar(EmbyDB().data(config, section),
-                           f'{timeoutput()} - Loading Emby section {emby_sections[section]} (ID {section})'):
-            embylibrary[section].append(Emby(row['Path'], row['ProviderIds'], row['Id'], row['Name']))
+                           f'{timeoutput()} - '
+                           f'Loading Emby section {emby_sections[section]} (ID {section})'):
+            embylibrary[section].append(Emby(row['Path'],
+                                             row['ProviderIds'],
+                                             row['Id'],
+                                             row['Name']))
 
 
 def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config):
+    """Maps Emby libraries to Arr root paths."""
     for arrtype in arrpaths.keys():
         arr_emby_match[arrtype] = dict()
         for arr in arrpaths[arrtype].keys():
@@ -27,19 +36,21 @@ def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config):
 
 
 def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
+    """Compares Arr data with Emby data."""
     counter = 0
     for arrtype in arr_emby_match.keys():
         if arrtype == "sonarr":
             agent = "Tvdb"
             arr = sonarr
-        if arrtype == "radarr":
+        elif arrtype == "radarr":
             agent = "Tmdb"
             arr = radarr
         for arrinstance in arr_emby_match[arrtype].keys():
             if len(arrinstance) == 0:
                 continue
             for folder in arr_emby_match[arrtype][arrinstance].values():
-                for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking Emby against {arrinstance}'):
+                for items in giefbar(arr[arrinstance],
+                                     f'{timeoutput()} - Checking Emby against {arrinstance}'):
                     for emby_items in library[folder.get("emby_library_id")]:
                         if items.path == map_path(config, emby_items.path):
                             if emby_items.id.get(agent):
@@ -47,10 +58,16 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
                                     break
                                 else:
                                     tqdm.write(
-                                        f"{timeoutput()} - {arrinstance} title: {items.title} did not match Emby title: {emby_items.title}")
+                                        f"{timeoutput()} - "
+                                        f"{arrinstance} title: {items.title} "
+                                        f"did not match Emby title: {emby_items.title}")
                                     tqdm.write(
-                                        f"{timeoutput()} - {arrinstance} {agent} id: {items.id} -- Emby {agent} id: {emby_items.id.get(agent)}")
-                                    tqdm.write(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
+                                        f"{timeoutput()} - "
+                                        f"{arrinstance} {agent} id: {items.id} -- "
+                                        f"Emby {agent} id: {emby_items.id.get(agent)}")
+                                    tqdm.write(
+                                        f"{timeoutput()} - "
+                                        f"Emby metadata ID: {emby_items.metadataid}")
 
                                     try:
                                         emby_match(config["emby_url"],
@@ -65,11 +82,16 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
                                                      emby_items.metadataid)
 
                                     except TypeError:
-                                        tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
+                                        tqdm.write(
+                                            f"{timeoutput()} - "
+                                            f"Emby metadata ID appears to be missing.")
                                     counter += 1
                             else:
-                                tqdm.write(f"{timeoutput()} - {arrinstance} title: {items.title} has no match in Emby")
-                                tqdm.write(f"{timeoutput()} - Emby metadata ID: {emby_items.metadataid}")
+                                tqdm.write(f"{timeoutput()} - "
+                                           f"{arrinstance} title: {items.title} "
+                                           f"has no match in Emby")
+                                tqdm.write(f"{timeoutput()} - "
+                                           f"Emby metadata ID: {emby_items.metadataid}")
 
                                 try:
                                     emby_match(config["emby_url"],
@@ -84,13 +106,15 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
                                                  emby_items.metadataid)
 
                                 except TypeError:
-                                    tqdm.write(f"{timeoutput()} - Emby metadata ID appears to be missing.")
+                                    tqdm.write(f"{timeoutput()} - "
+                                               f"Emby metadata ID appears to be missing.")
                                 counter += 1
                             break
     return counter
 
 
 def emby_match(url, token, metadataid, title, agent, agentid):
+    """Handles matching through editing metadata items."""
     retries = 5
     while retries > 0:
         try:
@@ -110,21 +134,26 @@ def emby_match(url, token, metadataid, title, agent, agentid):
             resp = requests.post(url_str, headers=headers, params=params, data=data, timeout=30)
 
             if resp.status_code == 200 or resp.status_code == 204:
-                tqdm.write(f"{timeoutput()} - Successfully matched {int(metadataid)} to {title} ({agentid})")
+                tqdm.write(f"{timeoutput()} - "
+                           f"Successfully matched {int(metadataid)} to {title} ({agentid})")
             else:
                 tqdm.write(
-                    f"{timeoutput()} - Failed to match {int(metadataid)} to {title} ({agentid}) - Emby returned error: {resp.text}")
+                    f"{timeoutput()} - "
+                    f"Failed to match {int(metadataid)} to {title} ({agentid}) - Emby returned error: {resp.text}")
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
             tqdm.write(
-                f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
+                f"{timeoutput()} - "
+                f"Exception matching {int(metadataid)} to {title} ({agentid}) - {retries} left.")
             retries -= 1
     if retries == 0:
         raise Exception(
-            f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
+            f"{timeoutput()} - "
+            f"Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
 
 
 def emby_refresh(url, token, metadataid):
+    """Handles refreshing metadata items."""
     retries = 5
     while retries > 0:
         try:
