@@ -6,8 +6,6 @@ import requests.exceptions
 
 from plexapi.video import Show
 from plexapi.video import Movie
-from plexapi.library import MovieSection
-from plexapi.library import ShowSection
 from classes.plex import Plex
 from utils.base import timeoutput, giefbar, map_path, tqdm
 
@@ -26,20 +24,15 @@ def load_plex_data(server, plex_sections, plexlibrary):
 def check_duplicate(server, plex_sections, config, delay):
     duplicate = 0
 
-    for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Checking for duplicate in Plex'):
+    for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Checking for duplicates in Plex'):
         section = server.library.sectionByID(str(sectionid))
-        if isinstance(section, MovieSection):
-            for duplicate_movie in section.search(libtype="movie", duplicate=True):
+        Show._include = ""
+        Movie._include = ""
+        for item in section.all():
+            if len(item.locations) > 1:
                 duplicate += 1
-                plex_split(duplicate_movie.ratingKey, config, delay)
+                plex_split(item.ratingKey, config, delay)
                 time.sleep(delay)
-
-        elif isinstance(section, ShowSection):
-            for duplicate_show in section.search(libtype="show", duplicate=True):
-                if len(duplicate_show.locations) > 1:
-                    duplicate += 1
-                    plex_split(duplicate_show.ratingKey, config, delay)
-                    time.sleep(delay)
 
     return duplicate
 
@@ -89,11 +82,6 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
                                                    items.title,
                                                    delay)
 
-                                        plex_refresh(config["plex_url"],
-                                                     config["plex_token"],
-                                                     plex_items.metadataid,
-                                                     delay)
-
                                         time.sleep(delay)
                                     except TypeError:
                                         tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
@@ -113,11 +101,6 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
                                                    items.id,
                                                    items.title,
                                                    delay)
-
-                                        plex_refresh(config["plex_url"],
-                                                     config["plex_token"],
-                                                     plex_items.metadataid,
-                                                     delay)
 
                                         time.sleep(delay)
                                     except TypeError:
@@ -154,29 +137,6 @@ def plex_match(url, token, agent, metadataid, agentid, title, delay):
     if retries == 0:
         raise Exception(
             f"{timeoutput()} - Exception matching {int(metadataid)} to {title} ({agentid}) - Ran out of retries.")
-
-
-def plex_refresh(url, token, metadataid, delay):
-    retries = 5
-    while retries > 0:
-        try:
-            url_params = {
-                'X-Plex-Token': token
-            }
-            url_str = '%s/library/metadata/%d/refresh' % (url, int(metadataid))
-            resp = requests.put(url_str, params=url_params, timeout=30)
-
-            if resp.status_code == 200:
-                tqdm.write(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
-            else:
-                tqdm.write(f"{timeoutput()} - Failed refreshing {int(metadataid)} - Plex returned error: {resp.text}")
-            break
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout):
-            tqdm.write(f"{timeoutput()} - Exception refreshing {int(metadataid)} - {retries} left.")
-            retries -= 1
-            time.sleep(delay)
-    if retries == 0:
-        raise Exception(f"{timeoutput()} - Exception refreshing {int(metadataid)} - Ran out of retries.")
 
 
 def plex_split(metadataid, config, delay):
