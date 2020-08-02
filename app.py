@@ -114,8 +114,6 @@ if plex_enabled:
 
     # Reload Plex data if duplicate items were found in Plex.
     if DUPLICATE > 0:
-        print(f"{timeoutput()} - Reloading data due to {DUPLICATE} duplicate item(s) in Plex")
-
         plexlibrary = dict()
         server.reload()
 
