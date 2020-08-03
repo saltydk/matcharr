@@ -9,3 +9,5 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
+/matcharr.log
+/config2.json

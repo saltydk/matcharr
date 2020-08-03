@@ -7,10 +7,10 @@ import requests.exceptions
 from plexapi.video import Show
 from plexapi.video import Movie
 from classes.plex import Plex
-from utils.base import timeoutput, giefbar, map_path, tqdm
+from utils.base import timeoutput, giefbar, tqdm, map_path
 
 
-def load_plex_data(server, plex_sections, plexlibrary):
+def load_plex_data(server, plex_sections, plexlibrary, config):
     for sectionid in giefbar(plex_sections.values(), f'{timeoutput()} - Loading data from Plex'):
         section = server.library.sectionByID(sectionid)
         Show._include = ""
@@ -18,7 +18,7 @@ def load_plex_data(server, plex_sections, plexlibrary):
         media = section.all()
         plexlibrary[sectionid] = list()
         for row in giefbar(media, f'{timeoutput()} - Loading Plex section {section.title} (ID {sectionid})'):
-            plexlibrary[sectionid].append(Plex(row.locations[0], row.guid, row.ratingKey, row.title))
+            plexlibrary[sectionid].append(Plex(row.locations[0], map_path(config, row.locations[0]), row.guid, row.ratingKey, row.title))
 
 
 def check_duplicate(server, plex_sections, config, delay):
@@ -65,7 +65,7 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
             for folder in arr_plex_match[arrtype][arrinstance].values():
                 for items in giefbar(arr[arrinstance], f'{timeoutput()} - Checking Plex against {arrinstance}'):
                     for plex_items in library[folder.get("plex_library_id")]:
-                        if items.path == map_path(config, plex_items.fullpath):
+                        if items.mappedpath == plex_items.mappedpath:
                             if plex_items.agent == "imdb":
                                 if items.imdb == plex_items.id:
                                     break

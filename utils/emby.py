@@ -18,6 +18,7 @@ def load_emby_data(config, emby_sections, embylibrary):
                            f'{timeoutput()} - '
                            f'Loading Emby section {emby_sections[section]} (ID {section})'):
             embylibrary[section].append(Emby(row['Path'],
+                                             map_path(config, row['Path']),
                                              row['ProviderIds'],
                                              row['Id'],
                                              row['Name']))
@@ -52,7 +53,7 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
                 for items in giefbar(arr[arrinstance],
                                      f'{timeoutput()} - Checking Emby against {arrinstance}'):
                     for emby_items in library[folder.get("emby_library_id")]:
-                        if items.path == map_path(config, emby_items.path):
+                        if items.mappedpath == emby_items.mappedpath:
                             if emby_items.id.get(agent):
                                 if str(items.id) == emby_items.id.get(agent):
                                     break

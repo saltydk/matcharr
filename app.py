@@ -86,8 +86,8 @@ if bool(radarrs_config.keys()):
 
 sonarr_items, radarr_items, plexlibrary, embylibrary = dict(), dict(), dict(), dict()
 
-parse_arr_data(media, sonarr_items, radarr_items)
-arrpaths = get_arrpaths(paths)
+parse_arr_data(media, sonarr_items, radarr_items, config)
+arrpaths = get_arrpaths(paths, config)
 
 # Check for duplicate entries in Arr instances.
 check_faulty(radarrs_config, sonarrs_config, radarr_items, sonarr_items)
@@ -117,7 +117,7 @@ if plex_enabled:
         plexlibrary = dict()
         server.reload()
 
-    load_plex_data(server, plex_sections, plexlibrary)
+    load_plex_data(server, plex_sections, plexlibrary, config)
 
     # Check for mismatched entries and correct them.
     PLEX_FIXED_MATCHES = 0

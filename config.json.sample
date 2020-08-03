@@ -8,7 +8,8 @@
   "delay": 10,
   "path_mappings": {
     "/mnt/unionfs/Media/": "/data/",
-    "/data/Movies/": "/movies/"
+    "/mnt/unionfs/Media/Movies/": "/movies/",
+    "/mnt/unionfs/Media/TV/": "/tv/"
   },
   "radarr": {
     "radarr": {

@@ -2,7 +2,7 @@
 Matcharr compares data from Sonarr/Radarr instances to libraries in Plex/Emby and fixes any mismatches created by the agents used.
 
 ### Current assumptions / limitations
-* Agents for movies are tmdb (Plex Movie can also use tmdb) and not imdb.
+* Agents for movies are tmdb or imdb.
 * Agents for shows are tvdb which means no HAMA or tmdb.
 * Assumes that you are using a similar directory structure to the ones recommended by Plex. 
 This for [movies](https://support.plex.tv/articles/naming-and-organizing-your-movie-media-files/) 
@@ -38,7 +38,8 @@ Template looks like this:
   "delay": 10,
   "path_mappings": {
     "/mnt/unionfs/Media/": "/data/",
-    "/data/Movies/": "/movies/"
+    "/mnt/unionfs/Media/Movies/": "/movies/",
+    "/mnt/unionfs/Media/TV/": "/tv/"
   },
   "radarr": {
     "radarr": {
@@ -81,10 +82,11 @@ For Plex you can get your token from Plex Autoscan or look [here](https://suppor
 ```
 "path_mappings": {
   "/mnt/unionfs/Media/": "/data/",
-  "/data/Movies/": "/movies/"
+  "/mnt/unionfs/Media/Movies/": "/movies/",
+  "/mnt/unionfs/Media/TV/": "/tv/"
 },
 ```
-You can add as many mapping entries as you'd like as long as the values on the right are unique. Script, using the above example, checks if the path in Plex/Emby starts with /data/ or /movies/ and replaces it with the corresponding value set in the config. So enter the path that is used in your Sonarr/Radarr instance and then the corresponding path in Plex/Emby. If you have no need for path mapping you can just leave it as is.
+You can add as many mapping entries as you'd like as long as the values on the right are unique. Script, using the above example, checks if the path starts with /data/, /tv/ or /movies/ and replaces it with the corresponding value set in the config. So enter the path that is used in your Sonarr/Radarr/Plex/Emby instances and then the corresponding path on the host that is running the script.
 
 #### Arr Section
 ```

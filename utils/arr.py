@@ -1,15 +1,16 @@
 import pandas as pd
 
 from classes.arrmedia import ArrMedia
-from utils.base import timeoutput, giefbar
+from utils.base import timeoutput, giefbar, map_path
 
 
-def parse_arr_data(media, sonarr, radarr):
+def parse_arr_data(media, sonarr, radarr, config):
     for Arrs, mediaDB in media.items():
         for showDB, shows in mediaDB.items():
             if Arrs == "sonarr":
                 sonarr[showDB] = [ArrMedia(seriesShow["title"],
                                            seriesShow["path"],
+                                           map_path(config, seriesShow["path"]),
                                            seriesShow["tvdbId"],
                                            seriesShow.get("imdbId", "none"),
                                            seriesShow["titleSlug"]) for seriesShow in shows]
@@ -17,12 +18,13 @@ def parse_arr_data(media, sonarr, radarr):
             if Arrs == "radarr":
                 radarr[showDB] = [ArrMedia(movies["title"],
                                            movies["path"],
+                                           map_path(config, movies["path"]),
                                            movies["tmdbId"],
                                            movies.get("imdbId", "none"),
                                            movies["titleSlug"]) for movies in shows]
 
 
-def get_arrpaths(paths):
+def get_arrpaths(paths, config):
     arrpaths = {}
     for arrtype in paths.keys():
         arrpaths[arrtype] = dict()
@@ -30,7 +32,7 @@ def get_arrpaths(paths):
             x = 0
             arrpaths[arrtype][arr] = dict()
             for path in data:
-                arrpaths[arrtype][arr][x] = path.get('path')
+                arrpaths[arrtype][arr][x] = map_path(config, path.get('path'))
                 x += 1
     return arrpaths
 
