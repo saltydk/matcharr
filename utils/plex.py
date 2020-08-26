@@ -76,7 +76,7 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
                                     try:
                                         plex_match(config["plex_url"],
                                                    config["plex_token"],
-                                                   agent,
+                                                   "imdb",
                                                    plex_items.metadataid,
                                                    items.imdb,
                                                    items.title,
