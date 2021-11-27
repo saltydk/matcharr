@@ -13,7 +13,7 @@ from utils.base import timeoutput, giefbar, map_path, tqdm
 def load_emby_data(config, emby_sections, embylibrary):
     """Loads data from Emby."""
     for section in giefbar(emby_sections, f'{timeoutput()} - Loading data from Emby'):
-        embylibrary[section] = list()
+        embylibrary[section] = []
         for row in giefbar(EmbyDB().data(config, section),
                            f'{timeoutput()} - '
                            f'Loading Emby section {emby_sections[section]} (ID {section})'):
@@ -29,7 +29,7 @@ def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config):
     for arrtype in arrpaths.keys():
         arr_emby_match[arrtype] = dict()
         for arr in arrpaths[arrtype].keys():
-            arr_emby_match[arrtype][arr] = dict()
+            arr_emby_match[arrtype][arr] = {}
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in emby_library_paths.values():
                     if arr_path == map_path(config, posixpath.join(library.get('Path'), '')):
@@ -40,12 +40,12 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
     """Compares Arr data with Emby data."""
     counter = 0
     for arrtype in arr_emby_match.keys():
-        if arrtype == "sonarr":
-            agent = "Tvdb"
-            arr = sonarr
-        elif arrtype == "radarr":
+        if arrtype == "radarr":
             agent = "Tmdb"
             arr = radarr
+        elif arrtype == "sonarr":
+            agent = "Tvdb"
+            arr = sonarr
         for arrinstance in arr_emby_match[arrtype].keys():
             if len(arrinstance) == 0:
                 continue
@@ -57,59 +57,39 @@ def emby_compare_media(arr_emby_match, sonarr, radarr, library, config):
                             if emby_items.id.get(agent):
                                 if str(items.id) == emby_items.id.get(agent):
                                     break
-                                else:
-                                    tqdm.write(
-                                        f"{timeoutput()} - "
-                                        f"{arrinstance} title: {items.title} "
-                                        f"did not match Emby title: {emby_items.title}")
-                                    tqdm.write(
-                                        f"{timeoutput()} - "
-                                        f"{arrinstance} {agent} id: {items.id} -- "
-                                        f"Emby {agent} id: {emby_items.id.get(agent)}")
-                                    tqdm.write(
-                                        f"{timeoutput()} - "
-                                        f"Emby metadata ID: {emby_items.metadataid}")
-
-                                    try:
-                                        emby_match(config["emby_url"],
-                                                   config["emby_token"],
-                                                   emby_items.metadataid,
-                                                   items.title,
-                                                   agent,
-                                                   items.id)
-
-                                        emby_refresh(config["emby_url"],
-                                                     config["emby_token"],
-                                                     emby_items.metadataid)
-
-                                    except TypeError:
-                                        tqdm.write(
-                                            f"{timeoutput()} - "
-                                            f"Emby metadata ID appears to be missing.")
-                                    counter += 1
+                                tqdm.write(
+                                    f"{timeoutput()} - "
+                                    f"{arrinstance} title: {items.title} "
+                                    f"did not match Emby title: {emby_items.title}")
+                                tqdm.write(
+                                    f"{timeoutput()} - "
+                                    f"{arrinstance} {agent} id: {items.id} -- "
+                                    f"Emby {agent} id: {emby_items.id.get(agent)}")
                             else:
                                 tqdm.write(f"{timeoutput()} - "
                                            f"{arrinstance} title: {items.title} "
                                            f"has no match in Emby")
-                                tqdm.write(f"{timeoutput()} - "
-                                           f"Emby metadata ID: {emby_items.metadataid}")
+                            tqdm.write(
+                                f"{timeoutput()} - "
+                                f"Emby metadata ID: {emby_items.metadataid}")
 
-                                try:
-                                    emby_match(config["emby_url"],
-                                               config["emby_token"],
-                                               emby_items.metadataid,
-                                               items.title,
-                                               agent,
-                                               items.id)
+                            try:
+                                emby_match(config["emby_url"],
+                                           config["emby_token"],
+                                           emby_items.metadataid,
+                                           items.title,
+                                           agent,
+                                           items.id)
 
-                                    emby_refresh(config["emby_url"],
-                                                 config["emby_token"],
-                                                 emby_items.metadataid)
+                                emby_refresh(config["emby_url"],
+                                             config["emby_token"],
+                                             emby_items.metadataid)
 
-                                except TypeError:
-                                    tqdm.write(f"{timeoutput()} - "
-                                               f"Emby metadata ID appears to be missing.")
-                                counter += 1
+                            except TypeError:
+                                tqdm.write(
+                                    f"{timeoutput()} - "
+                                    f"Emby metadata ID appears to be missing.")
+                            counter += 1
                             break
     return counter
 
@@ -134,7 +114,7 @@ def emby_match(url, token, metadataid, title, agent, agentid):
 
             resp = requests.post(url_str, headers=headers, params=params, data=data, timeout=30)
 
-            if resp.status_code == 200 or resp.status_code == 204:
+            if resp.status_code in [200, 204]:
                 tqdm.write(f"{timeoutput()} - "
                            f"Successfully matched {int(metadataid)} to {title} ({agentid})")
             else:
@@ -173,7 +153,7 @@ def emby_refresh(url, token, metadataid):
             }
             resp = requests.post(url_str, headers=headers, params=params, timeout=30)
 
-            if resp.status_code == 200 or resp.status_code == 204:
+            if resp.status_code in [200, 204]:
                 tqdm.write(f"{timeoutput()} - Successfully refreshed {int(metadataid)}")
             else:
                 tqdm.write(

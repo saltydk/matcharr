@@ -27,13 +27,11 @@ def parse_arr_data(media, sonarr, radarr, config):
 def get_arrpaths(paths, config):
     arrpaths = {}
     for arrtype in paths.keys():
-        arrpaths[arrtype] = dict()
+        arrpaths[arrtype] = {}
         for arr, data in paths[arrtype].items():
-            x = 0
-            arrpaths[arrtype][arr] = dict()
-            for path in data:
+            arrpaths[arrtype][arr] = {}
+            for x, path in enumerate(data):
                 arrpaths[arrtype][arr][x] = map_path(config, path.get('path'))
-                x += 1
     return arrpaths
 
 

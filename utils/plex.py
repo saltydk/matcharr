@@ -11,23 +11,27 @@ from utils.base import timeoutput, giefbar, tqdm, map_path
 
 
 def load_plex_data(server, plex_sections, plexlibrary, config):
+    Show._include = ""
+    Movie._include = ""
     for sectionid in giefbar(plex_sections.values(), f'{timeoutput()} - Loading data from Plex'):
         section = server.library.sectionByID(sectionid)
-        Show._include = ""
-        Movie._include = ""
         media = section.all()
-        plexlibrary[sectionid] = list()
+        plexlibrary[sectionid] = []
         for row in giefbar(media, f'{timeoutput()} - Loading Plex section {section.title} (ID {sectionid})'):
-            plexlibrary[sectionid].append(Plex(row.locations[0], map_path(config, row.locations[0]), row.guid, row.ratingKey, row.title))
+            plexlibrary[sectionid].append(Plex(row.locations[0],
+                                               map_path(config, row.locations[0]),
+                                               row.guid,
+                                               row.ratingKey,
+                                               row.title))
 
 
 def check_duplicate(server, plex_sections, config, delay):
     duplicate = 0
 
+    Show._include = ""
+    Movie._include = ""
     for sectionid, mediatype in giefbar(plex_sections.items(), f'{timeoutput()} - Checking for duplicates in Plex'):
         section = server.library.sectionByID(str(sectionid))
-        Show._include = ""
-        Movie._include = ""
         for item in section.all():
             if len(item.locations) > 1:
                 duplicate += 1
@@ -41,7 +45,7 @@ def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections
     for arrtype in arrpaths.keys():
         arr_plex_match[arrtype] = dict()
         for arr in arrpaths[arrtype].keys():
-            arr_plex_match[arrtype][arr] = dict()
+            arr_plex_match[arrtype][arr] = {}
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in plex_library_paths.keys():
                     for plex_path in plex_library_paths[library].values():
@@ -53,12 +57,12 @@ def arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections
 def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
     counter = 0
     for arrtype in arr_plex_match.keys():
-        if arrtype == "sonarr":
-            agent = "thetvdb"
-            arr = sonarr
-        elif arrtype == "radarr":
+        if arrtype == "radarr":
             agent = "themoviedb"
             arr = radarr
+        elif arrtype == "sonarr":
+            agent = "thetvdb"
+            arr = sonarr
         for arrinstance in arr_plex_match[arrtype].keys():
             if len(arrinstance) == 0:
                 continue
@@ -69,43 +73,41 @@ def plex_compare_media(arr_plex_match, sonarr, radarr, library, config, delay):
                             if plex_items.agent == "imdb":
                                 if items.imdb == plex_items.id:
                                     break
-                                else:
-                                    tqdm.write(
-                                        f"{timeoutput()} - Plex metadata item {plex_items.metadataid} with imdb ID:{plex_items.id} did not match {arrinstance} imdb ID:{items.imdb}")
+                                tqdm.write(
+                                    f"{timeoutput()} - Plex metadata item {plex_items.metadataid} with imdb ID:{plex_items.id} did not match {arrinstance} imdb ID:{items.imdb}")
 
-                                    try:
-                                        plex_match(config["plex_url"],
-                                                   config["plex_token"],
-                                                   "imdb",
-                                                   plex_items.metadataid,
-                                                   items.imdb,
-                                                   items.title,
-                                                   delay)
+                                try:
+                                    plex_match(config["plex_url"],
+                                               config["plex_token"],
+                                               "imdb",
+                                               plex_items.metadataid,
+                                               items.imdb,
+                                               items.title,
+                                               delay)
 
-                                        time.sleep(delay)
-                                    except TypeError:
-                                        tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
-                                    counter += 1
+                                    time.sleep(delay)
+                                except TypeError:
+                                    tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
+                                counter += 1
 
                             else:
                                 if items.id == plex_items.id:
                                     break
-                                else:
-                                    tqdm.write(f"{timeoutput()} - Plex metadata item {plex_items.metadataid} with {agent} ID:{plex_items.id} did not match {arrinstance} {agent} ID:{items.id}")
+                                tqdm.write(f"{timeoutput()} - Plex metadata item {plex_items.metadataid} with {agent} ID:{plex_items.id} did not match {arrinstance} {agent} ID:{items.id}")
 
-                                    try:
-                                        plex_match(config["plex_url"],
-                                                   config["plex_token"],
-                                                   agent,
-                                                   plex_items.metadataid,
-                                                   items.id,
-                                                   items.title,
-                                                   delay)
+                                try:
+                                    plex_match(config["plex_url"],
+                                               config["plex_token"],
+                                               agent,
+                                               plex_items.metadataid,
+                                               items.id,
+                                               items.title,
+                                               delay)
 
-                                        time.sleep(delay)
-                                    except TypeError:
-                                        tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
-                                    counter += 1
+                                    time.sleep(delay)
+                                except TypeError:
+                                    tqdm.write(f"{timeoutput()} - Plex metadata ID appears to be missing.")
+                                counter += 1
                                 break
     return counter
 

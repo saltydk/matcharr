@@ -3,6 +3,7 @@ Matcharr compares data from Sonarr/Radarr instances to
 libraries in Plex/Emby and fixes any mismatches created by the agents used.
 """
 
+
 import json
 import time
 import sys
@@ -100,13 +101,10 @@ if plex_enabled:
     plex_library_paths, arr_plex_match = dict(), dict()
 
     for section in server_sections:
-        plex_library_paths[section.key] = dict()
-        SECTION_COUNT = 0
-        for location in section.locations:
+        plex_library_paths[section.key] = {}
+        for SECTION_COUNT, location in enumerate(section.locations):
             plex_library_paths[section.key][SECTION_COUNT] = location
-            SECTION_COUNT += 1
-
-    arr_plex_match = dict()
+    arr_plex_match = {}
     arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config)
 
     # Check for duplicate entries in Plex.
@@ -114,7 +112,7 @@ if plex_enabled:
 
     # Reload Plex data if duplicate items were found in Plex.
     if DUPLICATE > 0:
-        plexlibrary = dict()
+        plexlibrary = {}
         server.reload()
 
     load_plex_data(server, plex_sections, plexlibrary, config)
@@ -135,7 +133,7 @@ if emby_enabled:
     emby_sections = EmbyDB.sections(config)
     load_emby_data(config, emby_sections, embylibrary)
 
-    arr_emby_match = dict()
+    arr_emby_match = {}
     arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config)
 
     # Check for mismatched entries and correct them.

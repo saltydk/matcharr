@@ -24,7 +24,7 @@ class EmbyDB:
         resp = requests.get(url_str, params=url_params, timeout=30)
         result = json.loads(resp.content)
 
-        emby_libraries = dict()
+        emby_libraries = {}
         x = 0
         for library in result:
             for subfolder in library.get('SubFolders'):
@@ -42,7 +42,7 @@ class EmbyDB:
         resp = requests.get(url_str, params=url_params, timeout=30)
         result = json.loads(resp.content)
 
-        emby_sections = dict()
+        emby_sections = {}
         for library in result:
             for subfolder in library.get('SubFolders'):
                 emby_sections[subfolder.get('Id')] = library.get('Name')
