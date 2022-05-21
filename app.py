@@ -3,7 +3,6 @@ Matcharr compares data from Sonarr/Radarr instances to
 libraries in Plex/Emby and fixes any mismatches created by the agents used.
 """
 
-
 import json
 import time
 import sys
@@ -101,9 +100,7 @@ if plex_enabled:
     plex_library_paths, arr_plex_match = dict(), dict()
 
     for section in server_sections:
-        plex_library_paths[section.key] = {}
-        for SECTION_COUNT, location in enumerate(section.locations):
-            plex_library_paths[section.key][SECTION_COUNT] = location
+        plex_library_paths[section.key] = dict(enumerate(section.locations))
     arr_plex_match = {}
     arr_find_plex_id(arrpaths, arr_plex_match, plex_library_paths, plex_sections, config)
 

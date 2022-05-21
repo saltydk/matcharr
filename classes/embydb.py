@@ -20,7 +20,7 @@ class EmbyDB:
         url_params = {
             'X-Emby-Token': config["emby_token"]
         }
-        url_str = '%s/emby/Library/SelectableMediaFolders' % (config["emby_url"])
+        url_str = f'{config["emby_url"]}/emby/Library/SelectableMediaFolders'
         resp = requests.get(url_str, params=url_params, timeout=30)
         result = json.loads(resp.content)
 
@@ -38,7 +38,7 @@ class EmbyDB:
         url_params = {
             'X-Emby-Token': config["emby_token"]
         }
-        url_str = '%s/emby/Library/SelectableMediaFolders' % (config["emby_url"])
+        url_str = f'{config["emby_url"]}/emby/Library/SelectableMediaFolders'
         resp = requests.get(url_str, params=url_params, timeout=30)
         result = json.loads(resp.content)
 

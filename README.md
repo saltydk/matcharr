@@ -1,19 +1,18 @@
 ### Matcharr
 Matcharr compares data from Sonarr/Radarr instances to libraries in Plex/Emby and fixes any mismatches created by the agents used.
 
+### Python
+Python 3.8 is the targetted requirement for this script. May work with other versions just don't assume it will.
+
 ### Current assumptions / limitations
-* Agents for movies are tmdb or imdb.
-* Agents for shows are tvdb which means no HAMA or tmdb.
+* Agents for movies are Plex Movie, tmdb or imdb.
+* Agents for shows are Plex TV Series or tvdb.
 * Assumes that you are using a similar directory structure to the ones recommended by Plex. 
 This for [movies](https://support.plex.tv/articles/naming-and-organizing-your-movie-media-files/) 
 and this for [TV Shows](https://support.plex.tv/articles/naming-and-organizing-your-tv-show-files/). 
 If you deviate from the structure you should assume that this script will not work for your setup. 
 Names of the files/folders are not important as long as they are unique since we use the folder data in 
 the various sonarr/radarr instances to figure out which is which and not relying on Plex to guess.
-
-### Plex warning
-The new movie agent introduced in 1.20.0.3125 changes how Plex stores metadata and 
-will not work with matcharr at this time.
 
 ### Emby notice
 Matcharr will queue the refresh requests in Emby after editing the metadata which means that if 
@@ -74,9 +73,9 @@ Template looks like this:
 "emby_enabled": false,
 "delay": 10,
 ```
-Enable the client(s) you want to use after entering the url and api token. If using Plex you can edit the delay option to change the rate of requests to Plex when it comes to metadata changes/refreshes if it overwhelms the Plex instance or you want to go faster.
+Enable the client(s) you want to use after entering the url and api token. If using Plex you can edit the delay option to change the rate of requests to Plex when it comes to metadata changes/refreshes if it overwhelms the Plex instance, or you want to go faster.
 
-For Plex you can get your token from Plex Autoscan or look [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+For Plex, you can get your token from Plex Autoscan or look [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 
 #### Path Mapping Section
 ```

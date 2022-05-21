@@ -12,27 +12,22 @@ from utils.base import timeoutput, giefbar, map_path, tqdm
 
 def load_emby_data(config, emby_sections, embylibrary):
     """Loads data from Emby."""
-    for section in giefbar(emby_sections, f'{timeoutput()} - Loading data from Emby'):
-        embylibrary[section] = []
-        for row in giefbar(EmbyDB().data(config, section),
-                           f'{timeoutput()} - '
-                           f'Loading Emby section {emby_sections[section]} (ID {section})'):
-            embylibrary[section].append(Emby(row['Path'],
-                                             map_path(config, row['Path']),
-                                             row['ProviderIds'],
-                                             row['Id'],
-                                             row['Name']))
+    for section in emby_sections:
+        embylibrary[section] = [Emby(row['Path'], map_path(config, row['Path']),
+                                     row['ProviderIds'], row['Id'], row['Name'])
+                                for row in giefbar(EmbyDB().data(config, section),
+                                                   f'{timeoutput()} - ' f'Loading Emby section {emby_sections[section]} (ID {section})')]
 
 
 def arr_find_emby_id(arrpaths, arr_emby_match, emby_library_paths, config):
     """Maps Emby libraries to Arr root paths."""
     for arrtype in arrpaths.keys():
-        arr_emby_match[arrtype] = dict()
+        arr_emby_match[arrtype] = {}
         for arr in arrpaths[arrtype].keys():
             arr_emby_match[arrtype][arr] = {}
             for arr_path in arrpaths[arrtype][arr].values():
                 for library in emby_library_paths.values():
-                    if arr_path == map_path(config, posixpath.join(library.get('Path'), '')):
+                    if arr_path.rstrip("/") == map_path(config, posixpath.join(library.get('Path'), '')).rstrip("/"):
                         arr_emby_match[arrtype][arr][arr_path] = {"emby_library_id": library.get('Id')}
 
 
