@@ -26,7 +26,7 @@ Once the core functionality has been more thoroughly tested I will work on confi
 
 Template looks like this:
 
-```
+```json
 {
   "plex_token": "",
   "plex_url": "https://plex.domain.tld",
@@ -64,7 +64,7 @@ Template looks like this:
 ```
 
 #### Media Server Section
-```
+```json
 "plex_token": "",
 "plex_url": "https://plex.domain.tld",
 "plex_enabled": false,
@@ -78,7 +78,7 @@ Enable the client(s) you want to use after entering the url and api token. If us
 For Plex, you can get your token from Plex Autoscan or look [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 
 #### Path Mapping Section
-```
+```json
 "path_mappings": {
   "/mnt/unionfs/Media/": "/data/",
   "/mnt/unionfs/Media/Movies/": "/movies/",
@@ -88,7 +88,7 @@ For Plex, you can get your token from Plex Autoscan or look [here](https://suppo
 You can add as many mapping entries as you'd like as long as the values on the right are unique. Script, using the above example, checks if the path starts with /data/, /tv/ or /movies/ and replaces it with the corresponding value set in the config. So enter the path that is used in your Sonarr/Radarr/Plex/Emby instances and then the corresponding path on the host that is running the script.
 
 #### Arr Section
-```
+```json
 "radarr": {
   "radarr": { <-- Unique name for instance
     "url": "https://radarr.domain.tld",
